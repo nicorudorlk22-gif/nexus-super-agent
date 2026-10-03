@@ -731,5 +731,162 @@ document.getElementById("chatText").addEventListener("keydown", e => {
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 loadKeys(); renderChips();
 </script>
+
+<script>
+/* ===== MODO BACKEND — NEXUS AI Backend v1.5 (server/) =====
+   Quando um backend real está conectado, o chat usa streaming SSE do servidor,
+   o terminal executa comandos REAIS com limites e o Model Hub mostra o catálogo
+   com status de chaves. Sem backend, tudo cai no modo local do navegador. */
+"use strict";
+const _origRouteLLM = routeLLM;
+const BK = {
+  url: LS.get("bk_url", ""), token: LS.get("bk_token", ""), on: false,
+  models: null
+};
+
+function bkFetch(path, opts = {}) {
+  const headers = Object.assign({ "Content-Type": "application/json" }, opts.headers || {});
+  if (BK.token) headers["x-nexus-token"] = BK.token;
+  return fetch(BK.url.replace(/\/$/, "") + path, Object.assign({}, opts, { headers }));
+}
+
+async function bkConnect(verbose) {
+  if (!BK.url) { if (verbose) alert("Informe a URL do backend"); return false; }
+  try {
+    const r = await bkFetch("/api/status");
+    if (!r.ok) throw new Error("HTTP " + r.status);
+    const j = await r.json();
+    BK.on = true;
+    document.getElementById("bkStatus").innerHTML = '<span class="ok-msg">✓ conectado · NEXUS AI Backend ' + (j.version || "?") + " · " + (j.providersConfigured) + " provedor(es) com chave</span>";
+    document.getElementById("engineTag").textContent = "backend real ✓";
+    bkLoadModels();
+    return true;
+  } catch (e) {
+    BK.on = false;
+    document.getElementById("bkStatus").innerHTML = '<span class="err-msg">sem conexão: ' + e.message + " (modo local ativo)</span>";
+    return false;
+  }
+}
+
+async function bkLoadModels() {
+  try {
+    const r = await bkFetch("/api/models");
+    const j = await r.json();
+    BK.models = j.catalog;
+    const sel = document.getElementById("modelSel");
+    const keep = sel.value;
+    sel.innerHTML = '<option value="demo">🧪 Modo Demo (sem chave)</option>';
+    BK.models.forEach(p => {
+      const o = document.createElement("option");
+      o.value = p.id;
+      o.textContent = (p.local ? "🏠 " : (p.hasKey ? "🔑 " : "○ ")) + p.name + (p.hasKey ? "" : " (sem chave)");
+      sel.appendChild(o);
+    });
+    if ([...sel.options].some(o => o.value === keep)) sel.value = keep;
+  } catch (e) { console.warn("catalogo indisponível", e); }
+}
+
+/* Chat via backend com streaming real (SSE) */
+async function bkChat(userText) {
+  const sel = document.getElementById("modelSel").value;
+  const model = document.getElementById("modelId").value.trim();
+  const el = addMsg("bot", "", sel + (model ? " · " + model : "") + " · backend");
+  const tn = document.createTextNode("");
+  el.appendChild(tn);
+  const r = await bkFetch("/api/chat", {
+    method: "POST",
+    body: JSON.stringify({ provider: sel, model, messages: [{ role: "user", content: userText }], stream: true })
+  });
+  if (!r.ok || !r.body) throw new Error("HTTP " + r.status);
+  const reader = r.body.getReader();
+  const dec = new TextDecoder();
+  let buf = "", full = "";
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    buf += dec.decode(value, { stream: true });
+    const lines = buf.split("\n"); buf = lines.pop();
+    for (const line of lines) {
+      if (!line.startsWith("data:")) continue;
+      try {
+        const j = JSON.parse(line.slice(5).trim());
+        if (j.delta) { full += j.delta; tn.data = full; document.getElementById("chatScroll").scrollTop = 1e9; }
+        if (j.error) throw new Error(j.error);
+      } catch (e) { if (e.message && !e.message.includes("JSON")) throw e; }
+    }
+  }
+  if (!full.trim()) throw new Error("resposta vazia do backend");
+  speak(full);
+}
+
+/* Override do roteador de chat: backend primeiro, fallback local */
+routeLLM = async function (userText) {
+  if (userText.startsWith("/agent ")) {
+    const task = userText.slice(7).trim();
+    if (!task) return addMsg("bot", "Uso: /agent <tarefa>. O orquestrador escolhe o especialista.", "CLI");
+    if (!BK.on) return addMsg("bot", "O modo agente precisa do backend conectado. Configure em ⚙️ → Backend.", "sistema");
+    const t = addMsg("bot", "Executando tarefa com o agente especialista...", "orquestrador");
+    try {
+      const r = await bkFetch("/api/agents/run", { method: "POST", body: JSON.stringify({ task, agent: "auto" }) });
+      const j = await r.json();
+      t.remove();
+      if (j.text) { addMsg("bot", j.text, j.agentName || j.agent); speak(j.text); }
+      if (j.toolRuns && j.toolRuns.length) addMsg("bot", "Ferramentas usadas:\n" + j.toolRuns.map(x => "• " + x.tool + (x.ok ? " ✓" : " ✗")).join("\n"), "ferramentas");
+    } catch (e) { t.remove(); addMsg("bot", "Erro no agente: " + e.message, "sistema"); }
+    return;
+  }
+  if (BK.on) {
+    try { await bkChat(userText); return; }
+    catch (e) { addMsg("bot", "Backend falhou (" + e.message + "), respondendo local.", "fallback"); }
+  }
+  return _origRouteLLM(userText);
+};
+
+/* Override do terminal: comandos reais no backend com limites */
+const _runShell = runShell;
+runShell = async function (line) {
+  if (!line) return;
+  const [cmd] = line.split(/\s+/);
+  if (["help", "clear", "neofetch"].includes(cmd)) return _runShell(line);
+  if (BK.on) {
+    const w = t => term.write(String(t).replace(/\n/g, "\r\n") + "\r\n");
+    try {
+      const r = await bkFetch("/api/terminal/exec", { method: "POST", body: JSON.stringify({ cmd: line, timeoutSec: 20 }) });
+      const j = await r.json();
+      if (j.stdout) w(j.stdout);
+      if (j.stderr) w("\x1b[31m" + j.stderr + "\x1b[0m");
+      if (j.error) w("\x1b[31m" + j.error + "\x1b[0m");
+      if (!j.stdout && !j.stderr && !j.error) w("(sem saída · código " + j.code + ")");
+      if (j.timedOut) w("\x1b[31m⏱ tempo limite atingido (20s)\x1b[0m");
+    } catch (e) { w("\x1b[31mbackend inacessível: " + e.message + "\x1b[0m"); }
+    return;
+  }
+  return _runShell(line);
+};
+
+/* Injeta cartão de configuração do backend nas configurações */
+(function () {
+  const card = document.createElement("div");
+  card.className = "set-card";
+  card.innerHTML = `<h3>🖥️ Backend próprio (NEXUS AI)</h3>
+    <div class="field"><label>URL do servidor (rode: node server/server.js)</label>
+      <input type="url" id="bkUrl" placeholder="http://localhost:3000" value="${BK.url}"></div>
+    <div class="field"><label>Token de acesso (NEXUS_AUTH_TOKEN do servidor, se houver)</label>
+      <input type="password" id="bkToken" value="${BK.token}"></div>
+    <div class="row"><button class="btn primary" onclick="bkSave()">💾 Salvar e conectar</button>
+      <span id="bkStatus"><span class="hint">sem backend: modo local do navegador</span></span></div>
+    <div class="hint">Conectado, o terminal executa comandos reais com limites (timeout, jail de workspace, bloqueios), o chat usa os provedores do cofre criptografado do servidor e o comando /agent &lt;tarefa&gt; delega ao orquestrador multiagente.</div>`;
+  document.querySelector(".settings").prepend(card);
+})();
+
+function bkSave() {
+  BK.url = document.getElementById("bkUrl").value.trim();
+  BK.token = document.getElementById("bkToken").value.trim();
+  LS.set("bk_url", BK.url); LS.set("bk_token", BK.token);
+  bkConnect(true).then(ok => { if (ok) addMsg("bot", "Backend conectado. Terminal agora executa comandos reais, chat com streaming e /agent <tarefa> ativa o orquestrador.", "backend"); });
+}
+if (BK.url) bkConnect(false);
+</script>
+
 </body>
 </html>

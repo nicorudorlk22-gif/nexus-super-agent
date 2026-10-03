@@ -1,0 +1,34 @@
+# NEXUS AI — ambiente de execução isolado
+# Uso: docker compose up -d
+# O backend roda em container sem rede externa por padrão (uncomment p/ liberar),
+# workspace persistente em volume, limites de CPU/memória aplicados.
+
+services:
+  nexus-backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: nexus-backend
+    ports:
+      - "3000:3000"
+    environment:
+      PORT: "3000"
+      NEXUS_AUTH_TOKEN: ${NEXUS_AUTH_TOKEN}
+      NEXUS_MASTER_KEY: ${NEXUS_MASTER_KEY}
+      NEXUS_WORKSPACE: /workspace
+    volumes:
+      - nexus-workspace:/workspace
+    read_only: true
+    tmpfs:
+      - /tmp
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    mem_limit: 512m
+    cpus: "1.0"
+    pids_limit: 128
+    restart: unless-stopped
+
+volumes:
+  nexus-workspace:

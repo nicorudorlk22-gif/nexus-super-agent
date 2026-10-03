@@ -90,3 +90,63 @@ Super agente de IA **open source** que roda 100% no navegador. Chat multi-modelo
 MIT © Nicolas Martins
 
 Feito para o ecossistema [NEXUS](https://nm424294.hotmart.host/5-ias-nexus).
+
+---
+
+# Backend próprio (v1.5)
+
+A plataforma agora tem backend real em `server/`, zero dependências externas (Node 18+).
+
+## O que é real agora
+
+| Módulo | Status | Detalhe |
+|---|---|---|
+| Gateway multimodelo | ✅ real | 14 provedores (OpenRouter, NVIDIA NIM, Gemini, Groq, Cerebras, MiniMax, DeepSeek, Mistral, Together, Fireworks, OpenAI, Anthropic, Hugging Face, Ollama local) + servidor OpenAI-compatível próprio |
+| Streaming SSE | ✅ real | `POST /api/chat {stream:true}` token a token (OpenAI-compat e Gemini) |
+| Fallback automático | ✅ real | provedor caiu, a requisição recai no próximo com chave |
+| Cofre de chaves | ✅ real | AES-256-GCM em repouso; valores nunca saem da API (só os ids) |
+| Terminal | ✅ real | `POST /api/terminal/exec` executa bash/node/npm/python/git de verdade, com timeout (1-60s), jail de workspace, bloqueio de padrões perigosos e limite de saída |
+| VFS | ✅ real | listar/ler/escrever/deletar com jail de caminho (path traversal bloqueado) |
+| Multiagente | ✅ real | 15 agentes especializados, seletor automático por tarefa, orquestrador com loop de ferramentas (exec, arquivos, webhook) de até 4 passos |
+| GitHub | ✅ real | proxy autenticado para api.github.com (GET/POST/PATCH/PUT/DELETE) com token no cofre |
+| Webhooks / n8n | ✅ real | disparo com proteção SSRF (bloqueia rede interna e http simples) |
+| WhatsApp | ⚙️ bridge | envia ao bridge oficial que você configurar (WhatsApp Business Cloud API pelas regras da Meta) |
+| Dashboard | ✅ real | `GET /api/status`: uptime, provedores configurados, workspace, últimos erros |
+| Auditoria | ✅ real | `GET /api/audit`: log das últimas 100 operações |
+
+## Rápido start
+
+```bash
+git clone https://github.com/nicorudorlk22-gif/nexus-super-agent
+cd nexus-super-agent
+node server/server.js          # http://localhost:3000
+node --test server/test/       # 14 testes
+```
+
+No frontend (⚙️ → Backend próprio), aponte a URL do servidor e conecte: o terminal passa a executar comandos reais, o chat usa streaming dos seus provedores e `/agent <tarefa>` ativa o orquestrador multiagente.
+
+API Keys via cofre (criptografadas):
+
+```bash
+curl -X PUT http://localhost:3000/api/keys \
+  -H 'Content-Type: application/json' \
+  -d '{"id":"key_openrouter","value":"sk-or-v1-..."}'
+```
+
+## Produção (isolamento forte)
+
+O exec no servidor usa defesa em camadas (jail de cwd, timeout, bloqueios, saída limitada). Para isolamento de verdade use o container:
+
+```bash
+cp .env.example .env   # defina NEXUS_AUTH_TOKEN e NEXUS_MASTER_KEY
+docker compose up -d
+```
+
+O `docker-compose.yml` roda sem privilégios, `read_only`, com limites de CPU/memória/processos e workspace em volume.
+
+## Fases (plano do projeto)
+
+- **FASE A-J**: estrutura, Model Hub, chat multimodelo, agentes, terminal, navegador, marketplace, integrações, voz, segurança ✅ base entregue nesta versão
+- **Pendente honesto**: Docker por sessão com rede zerada (compose pronto, orquestração por contêiner dinâmico no roadmap), Playwright headless no navegador interno, RAG/pgvector, editor de arquivos com CodeMirror, MCP server, workers com filas (Redis), LSP/Tree-sitter
+
+Nada é apresentado como funcionando sem estar funcionando. O que depende de credencial (provedores, GitHub, WhatsApp, n8n) responde com erro claro até você configurar.
