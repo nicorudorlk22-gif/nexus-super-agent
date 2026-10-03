@@ -1,0 +1,735 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NEXUS Super Agent</title>
+<meta name="description" content="Super agente de IA open source: multi-modelo, terminal, Python no navegador, voz e marketplace de plugins.">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/xterm@5.3.0/css/xterm.min.css">
+<style>
+:root{
+  --bg:#07090c; --bg2:#0c1014; --card:#10151c; --card2:#151c25;
+  --gold:#d4af37; --green:#22c55e; --cyan:#38bdf8; --red:#ef4444;
+  --text:#e5e7eb; --muted:#8b95a5; --border:#1e2833;
+  --accent:var(--gold);
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{height:100%}
+body{background:var(--bg);color:var(--text);font-family:'Segoe UI',system-ui,-apple-system,sans-serif;overflow:hidden}
+#particles{position:fixed;inset:0;z-index:0;opacity:.55}
+.app{position:relative;z-index:1;display:flex;flex-direction:column;height:100vh}
+/* BOOT */
+#boot{position:fixed;inset:0;background:var(--bg);z-index:99;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:14px;transition:opacity .8s}
+#boot .logo{font-size:34px;font-weight:800;letter-spacing:6px;color:var(--gold);text-shadow:0 0 30px rgba(212,175,55,.6);animation:pulse 1.6s infinite}
+#boot .sub{color:var(--muted);font-size:12px;letter-spacing:3px}
+#bootlog{font-family:monospace;font-size:12px;color:var(--green);min-height:120px;white-space:pre-line;text-align:left;width:340px}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.55}}
+/* HEADER */
+header{display:flex;align-items:center;gap:14px;padding:10px 16px;background:linear-gradient(180deg,#0d1218,#0a0e13);border-bottom:1px solid var(--border)}
+header .logo{font-weight:800;letter-spacing:2px;color:var(--gold);white-space:nowrap}
+header .logo span{color:var(--green)}
+header .tag{font-size:10px;color:var(--muted);border:1px solid var(--border);padding:2px 8px;border-radius:20px}
+header .spacer{flex:1}
+select,input[type=text],input[type=password],input[type=url]{background:var(--card);border:1px solid var(--border);color:var(--text);padding:8px 10px;border-radius:8px;font-size:13px;outline:none}
+select:focus,input:focus{border-color:var(--accent)}
+.status-dot{width:8px;height:8px;border-radius:50%;background:var(--green);box-shadow:0 0 8px var(--green);animation:pulse 2s infinite}
+.btn{background:var(--card);border:1px solid var(--border);color:var(--text);padding:8px 14px;border-radius:8px;cursor:pointer;font-size:13px;transition:.2s;white-space:nowrap}
+.btn:hover{border-color:var(--accent);box-shadow:0 0 12px rgba(212,175,55,.25);transform:translateY(-1px)}
+.btn.primary{background:linear-gradient(135deg,var(--gold),#b8912a);color:#000;font-weight:700;border:none}
+.btn.green{background:linear-gradient(135deg,var(--green),#15803d);color:#fff;border:none}
+/* LAYOUT */
+.main{flex:1;display:flex;min-height:0}
+nav{width:62px;background:var(--bg2);border-right:1px solid var(--border);display:flex;flex-direction:column;align-items:center;padding:12px 0;gap:8px}
+nav .nav-btn{width:44px;height:44px;border-radius:12px;display:flex;align-items:center;justify-content:center;cursor:pointer;border:1px solid transparent;transition:.2s;font-size:20px;position:relative}
+nav .nav-btn:hover{background:var(--card);border-color:var(--border)}
+nav .nav-btn.active{background:var(--card);border-color:var(--accent);box-shadow:0 0 14px rgba(212,175,55,.2)}
+nav .nav-btn .badge{position:absolute;top:-3px;right:-3px;background:var(--green);color:#fff;font-size:9px;padding:1px 5px;border-radius:10px}
+.panel{flex:1;display:none;flex-direction:column;min-width:0}
+.panel.active{display:flex}
+/* CHAT */
+#chatPanel{padding:0}
+#chatScroll{flex:1;overflow-y:auto;padding:20px;display:flex;flex-direction:column;gap:14px}
+.msg{max-width:78%;padding:12px 16px;border-radius:14px;line-height:1.5;font-size:14px;animation:msgIn .3s;white-space:pre-wrap;word-wrap:break-word}
+@keyframes msgIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+.msg.user{align-self:flex-end;background:linear-gradient(135deg,#1a2430,#141c26);border:1px solid #263442}
+.msg.bot{align-self:flex-start;background:var(--card);border:1px solid var(--border);border-left:3px solid var(--accent)}
+.msg.bot .who{font-size:10px;color:var(--gold);margin-bottom:4px;letter-spacing:1px}
+.msg.bot .who small{color:var(--muted)}
+.typing{align-self:flex-start;display:flex;gap:5px;padding:14px;background:var(--card);border-radius:14px;border:1px solid var(--border)}
+.typing i{width:7px;height:7px;border-radius:50%;background:var(--gold);animation:bounce 1.2s infinite}
+.typing i:nth-child(2){animation-delay:.15s}.typing i:nth-child(3){animation-delay:.3s}
+@keyframes bounce{0%,60%,100%{transform:translateY(0)}30%{transform:translateY(-7px)}}
+.chat-input{padding:14px 20px;border-top:1px solid var(--border);display:flex;gap:10px;background:var(--bg2)}
+.chat-input textarea{flex:1;background:var(--card);border:1px solid var(--border);color:var(--text);border-radius:10px;padding:11px 14px;font-size:14px;resize:none;outline:none;font-family:inherit;max-height:130px}
+.chat-input textarea:focus{border-color:var(--accent)}
+.icon-btn{width:44px;height:44px;border-radius:10px;border:1px solid var(--border);background:var(--card);color:var(--text);cursor:pointer;font-size:18px;transition:.2s;display:flex;align-items:center;justify-content:center}
+.icon-btn:hover{border-color:var(--accent)}
+.icon-btn.rec{background:var(--red);border-color:var(--red);color:#fff;animation:pulse 1s infinite}
+.chips{display:flex;gap:8px;padding:10px 20px;flex-wrap:wrap;border-top:1px solid var(--border);background:var(--bg2)}
+.chip{font-size:11px;padding:5px 12px;border-radius:20px;border:1px solid var(--border);cursor:pointer;color:var(--muted);transition:.2s}
+.chip:hover{color:var(--gold);border-color:var(--gold)}
+/* TERMINAL */
+#terminalPanel .term-wrap{flex:1;padding:10px;display:flex;min-height:0}
+#term{flex:1;border-radius:10px;border:1px solid var(--border);padding:8px}
+/* BROWSER */
+.browser-bar{display:flex;gap:8px;padding:12px;border-bottom:1px solid var(--border);background:var(--bg2)}
+.browser-bar input{flex:1}
+#webFrame{flex:1;border:none;background:#fff}
+/* PLUGINS */
+.plugins{flex:1;overflow-y:auto;padding:20px}
+.plugins h2,.settings h2{font-size:18px;margin-bottom:4px;color:var(--gold)}
+.plugins .sub,.settings .sub{color:var(--muted);font-size:12px;margin-bottom:18px}
+.plug-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:14px}
+.plug{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:16px;transition:.25s;position:relative;overflow:hidden}
+.plug:hover{transform:translateY(-3px);border-color:var(--accent);box-shadow:0 8px 24px rgba(212,175,55,.12)}
+.plug.installed{border-color:var(--green)}
+.plug .icon{font-size:26px;margin-bottom:8px}
+.plug h3{font-size:14px;margin-bottom:6px}
+.plug p{font-size:11.5px;color:var(--muted);line-height:1.5;margin-bottom:10px}
+.plug .meta{display:flex;justify-content:space-between;align-items:center}
+.plug .cat{font-size:10px;color:var(--cyan);border:1px solid #1e3a4d;background:#0d1820;padding:2px 8px;border-radius:10px}
+.plug .state{font-size:10px;color:var(--green);font-weight:600}
+.plug .actions{margin-top:12px;display:flex;gap:8px}
+.plug .actions .btn{padding:6px 12px;font-size:11px}
+.searchbar{display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap}
+.searchbar input{flex:1;min-width:200px}
+.searchbar select{width:auto}
+/* SETTINGS */
+.settings{flex:1;overflow-y:auto;padding:20px}
+.set-card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:18px;margin-bottom:14px}
+.set-card h3{font-size:14px;color:var(--gold);margin-bottom:12px;display:flex;align-items:center;gap:8px}
+.field{display:flex;flex-direction:column;gap:5px;margin-bottom:12px}
+.field label{font-size:11px;color:var(--muted)}
+.field input,.field textarea{width:100%}
+.field textarea{background:var(--card);border:1px solid var(--border);color:var(--text);border-radius:8px;padding:8px 10px;font-size:12px;min-height:60px;font-family:monospace;outline:none}
+.hint{font-size:10.5px;color:var(--muted);margin-top:4px;line-height:1.4}
+.row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.ok-msg{color:var(--green);font-size:12px}
+.err-msg{color:var(--red);font-size:12px}
+/* STATUS BAR */
+.statusbar{display:flex;gap:16px;padding:6px 16px;background:var(--bg2);border-top:1px solid var(--border);font-size:11px;color:var(--muted);flex-wrap:wrap}
+.statusbar b{color:var(--text)}
+.statusbar .live{color:var(--green)}
+::-webkit-scrollbar{width:8px;height:8px}
+::-webkit-scrollbar-thumb{background:#223041;border-radius:8px}
+::-webkit-scrollbar-track{background:transparent}
+@media(max-width:760px){nav{width:52px}.msg{max-width:92%}}
+</style>
+</head>
+<body>
+<div id="particles"></div>
+<div id="boot">
+  <div class="logo">NEXUS</div>
+  <div class="sub">SUPER AGENT v1.0</div>
+  <div id="bootlog"></div>
+</div>
+
+<div class="app">
+  <header>
+    <div class="logo">NEX<span>US</span> <small style="font-size:10px;color:var(--muted)">SUPER AGENT</small></div>
+    <span class="tag" id="engineTag">demo local</span>
+    <div class="spacer"></div>
+    <span class="status-dot" title="online"></span>
+    <select id="modelSel" title="Modelo de IA">
+      <option value="demo">🧪 Modo Demo (sem chave)</option>
+      <option value="openrouter">🔀 OpenRouter (modelos free)</option>
+      <option value="nvidia">🟩 NVIDIA NIM</option>
+      <option value="minimax">🟥 MiniMax</option>
+      <option value="gemini">🔵 Google Gemini</option>
+      <option value="custom">⚙️ OpenAI-compatível (URL própria)</option>
+    </select>
+    <input type="text" id="modelId" placeholder="id do modelo" style="width:180px" title="ID do modelo (ex.: google/gemini-2.0-flash-exp:free)">
+    <button class="btn" onclick="go('settings')">🔑 Chaves</button>
+  </header>
+
+  <div class="main">
+    <nav>
+      <div class="nav-btn active" onclick="go('chat')" title="Chat" id="nb-chat">💬</div>
+      <div class="nav-btn" onclick="go('terminal')" title="Terminal" id="nb-terminal">⌨️</div>
+      <div class="nav-btn" onclick="go('browser')" title="Navegador ao vivo" id="nb-browser">🌐</div>
+      <div class="nav-btn" onclick="go('plugins')" title="Marketplace de plugins" id="nb-plugins">🧩<span class="badge" id="plugBadge">0</span></div>
+      <div class="nav-btn" onclick="go('settings')" title="Configurações e integrações" id="nb-settings">⚙️</div>
+    </nav>
+
+    <!-- CHAT -->
+    <div class="panel active" id="chatPanel">
+      <div id="chatScroll"></div>
+      <div class="chips" id="chips"></div>
+      <div class="chat-input">
+        <button class="icon-btn" id="micBtn" onclick="toggleMic()" title="Falar (reconhecimento de voz)">🎤</button>
+        <textarea id="chatText" rows="1" placeholder="Fale ou digite... o agente responde com voz se ligar o alto-falante"></textarea>
+        <button class="icon-btn" id="ttsBtn" onclick="toggleTTS()" title="Alto-falante do agente (voz)">🔈</button>
+        <button class="btn primary" onclick="sendMsg()">Enviar ▸</button>
+      </div>
+    </div>
+
+    <!-- TERMINAL -->
+    <div class="panel" id="terminalPanel">
+      <div class="term-wrap"><div id="term"></div></div>
+    </div>
+
+    <!-- BROWSER -->
+    <div class="panel" id="browserPanel">
+      <div class="browser-bar">
+        <input type="text" id="urlBar" placeholder="https://exemplo.com ou cole HTML:" value="https://pt.wikipedia.org/wiki/Intelig%C3%AAncia_artificial">
+        <button class="btn green" onclick="navBrowser()">Ir ▸</button>
+        <button class="btn" onclick="previewHTML()" title="Visualizar o HTML digitado na barra">▶ Preview HTML</button>
+        <button class="btn" onclick="openInNewTab()">↗ Nova aba</button>
+      </div>
+      <iframe id="webFrame" src="https://pt.wikipedia.org/wiki/Intelig%C3%AAncia_artificial" sandbox="allow-scripts allow-same-origin allow-forms"></iframe>
+    </div>
+
+    <!-- PLUGINS -->
+    <div class="panel" id="pluginsPanel">
+      <div class="plugins">
+        <h2>🧩 Marketplace de Plugins</h2>
+        <div class="sub">Ecosistema estilo Acode: instale, ative e combine extensões. Tudo fica salvo no seu navegador.</div>
+        <div class="searchbar">
+          <input type="text" id="plugSearch" placeholder="Buscar plugin..." oninput="renderPlugins()">
+          <select id="plugCat" onchange="renderPlugins()">
+            <option value="">Todas as categorias</option>
+            <option>Integração</option><option>Automação</option><option>Dev</option><option>Voz e Mídia</option><option>Visual</option><option>Produtividade</option>
+          </select>
+        </div>
+        <div class="plug-grid" id="plugGrid"></div>
+      </div>
+    </div>
+
+    <!-- SETTINGS -->
+    <div class="panel" id="settingsPanel">
+      <div class="settings">
+        <h2>⚙️ Configurações e Integrações</h2>
+        <div class="sub">Chaves ficam só no seu navegador (localStorage). Nada é enviado a terceiros sem sua ação.</div>
+
+        <div class="set-card">
+          <h3>🧠 Modelos de IA (gratuitos)</h3>
+          <div class="field"><label>OpenRouter API Key (tem modelos :free)</label><input type="password" id="k_openrouter" placeholder="sk-or-v1-..."></div>
+          <div class="field"><label>NVIDIA NIM API Key (build.nvidia.com)</label><input type="password" id="k_nvidia" placeholder="nvapi-..."></div>
+          <div class="field"><label>MiniMax API Key</label><input type="password" id="k_minimax" placeholder="eyJ..."></div>
+          <div class="field"><label>Google Gemini API Key (aistudio.google.com)</label><input type="password" id="k_gemini" placeholder="AIza..."></div>
+          <div class="field"><label>Servidor OpenAI-compatível (URL base)</label><input type="url" id="k_custom" placeholder="https://api.seuservidor.com/v1"></div>
+          <div class="field"><label>Chave do servidor custom (opcional)</label><input type="password" id="k_custom_key" placeholder="Bearer token"></div>
+          <div class="row"><button class="btn primary" onclick="saveKeys()">💾 Salvar chaves</button><span id="keysMsg"></span></div>
+          <div class="hint">Modelos sugeridos: google/gemini-2.0-flash-exp:free, meta-llama/llama-3.1-8b-instruct:free, mistralai/mistral-7b-instruct:free (OpenRouter), llama-3.1-nemotron-70b (NVIDIA), gemini-2.0-flash (Gemini), abab6.5s-chat (MiniMax).</div>
+        </div>
+
+        <div class="set-card">
+          <h3>💬 WhatsApp Bridge</h3>
+          <div class="field"><label>Webhook do bridge (Base44, n8n ou seu servidor)</label><input type="url" id="k_wa_webhook" placeholder="https://.../webhook"></div>
+          <div class="field"><label>Token secreto do bridge</label><input type="password" id="k_wa_token" placeholder="token"></div>
+          <div class="row"><button class="btn green" onclick="testWA()">📡 Testar conexão</button><span id="waMsg"></span></div>
+          <div class="hint">O agente envia e recebe mensagens pelo webhook. Com o Base44 Superagent você cria o bridge real; com o n8n você conecta a API oficial do WhatsApp Business. O plugin "WhatsApp Bridge" do marketplace usa esta configuração.</div>
+        </div>
+
+        <div class="set-card">
+          <h3>🔄 Automação (n8n) e Dados (Supabase / Firebase)</h3>
+          <div class="field"><label>Webhook n8n para ações do agente</label><input type="url" id="k_n8n" placeholder="https://seu-n8n.com/webhook/nexus"></div>
+          <div class="field"><label>Supabase URL</label><input type="url" id="k_supabase" placeholder="https://xyz.supabase.co"></div>
+          <div class="field"><label>Supabase anon key</label><input type="password" id="k_supabase_key" placeholder="eyJ..."></div>
+          <div class="field"><label>Firebase config (JSON)</label><textarea id="k_firebase" placeholder='{"apiKey":"...","projectId":"...","appId":"..."}'></textarea></div>
+          <div class="row"><button class="btn primary" onclick="saveKeys()">💾 Salvar integrações</button><button class="btn" onclick="testN8N()">🔄 Testar n8n</button><span id="n8nMsg"></span></div>
+          <div class="hint">n8n: cada comando /n8n no chat dispara o fluxo. Supabase: o plugin "Memória Supabase" salva o histórico da conversa. Firebase: sincronização multi-dispositivo (roadmap do app).</div>
+        </div>
+
+        <div class="set-card">
+          <h3>🎨 Aparência</h3>
+          <div class="row">
+            <button class="btn" onclick="setAccent('var(--gold)')">Dourado</button>
+            <button class="btn" onclick="setAccent('var(--green)')">Verde</button>
+            <button class="btn" onclick="setAccent('var(--cyan)')">Ciano</button>
+            <span class="hint">Estilo NEXUS: preto, dourado e verde. Animado, mas leve.</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="statusbar">
+    <span>Modelo: <b id="sbModel">demo</b></span>
+    <span>Plugins: <b id="sbPlug">0</b></span>
+    <span>Python: <b id="sbPy">aguardando</b></span>
+    <span>Voz: <b id="sbVoice">🔇</b></span>
+    <span>Sandbox: <b class="live" id="sbSandbox">isolado ✓</b></span>
+    <span class="spacer"></span>
+    <span><b id="sbClock">--:--</b> <span id="sbDate"></span></span>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/xterm@5.3.0/lib/xterm.min.js"></script>
+<script>
+"use strict";
+/* ============ ESTADO ============ */
+const LS = {
+  get: (k, d) => { try { return localStorage.getItem(k) ?? d } catch(e){ return d } },
+  set: (k, v) => { try { localStorage.setItem(k, v) } catch(e){} }
+};
+let ttsOn = false, rec = null, recording = false;
+let pyodide = null, pyLoading = false;
+
+/* ============ BOOT ============ */
+const bootLines = [
+  "▸ inicializando núcleo NEXUS...",
+  "▸ carregando sandbox isolado... ok",
+  "▸ conectando marketplace de plugins... ok",
+  "▸ preparando terminal virtual... ok",
+  "▸ verificando voz e navegador ao vivo... ok",
+  "▸ super agente pronto. bem-vindo."
+];
+let bi = 0;
+const bootTimer = setInterval(() => {
+  document.getElementById("bootlog").textContent += bootLines[bi] + "\n";
+  bi++;
+  if (bi >= bootLines.length) {
+    clearInterval(bootTimer);
+    setTimeout(() => {
+      const b = document.getElementById("boot");
+      b.style.opacity = 0;
+      setTimeout(() => b.remove(), 800);
+      bootDone();
+    }, 500);
+  }
+}, 380);
+
+function bootDone(){
+  addMsg("bot", "Fala! Eu sou o *NEXUS Super Agent*, seu agente de IA que roda direto no navegador.\n\nO que eu já faço agora:\n• Chat com vários modelos (NVIDIA, MiniMax, Gemini, OpenRouter, servidor próprio)\n• Terminal próprio com Python de verdade (Pyodide)\n• Navegador ao vivo com preview de HTML\n• Voz: falo e escuto em português\n• Marketplace de plugins estilo Acode\n• Integrações: WhatsApp, n8n, Supabase, Firebase\n\nDica: clique no 🎤 pra falar comigo, no 🔈 pra eu responder falando, ou digite /help no chat.", "núcleo local");
+  renderPlugins();
+}
+
+/* ============ NAVEGAÇÃO ============ */
+function go(p){
+  document.querySelectorAll(".panel").forEach(x => x.classList.remove("active"));
+  document.querySelectorAll(".nav-btn").forEach(x => x.classList.remove("active"));
+  document.getElementById(p + "Panel").classList.add("active");
+  document.getElementById("nb-" + p).classList.add("active");
+  if (p === "terminal") setTimeout(initTerm, 60);
+}
+
+/* ============ CHAT ============ */
+const chipsData = [
+  ["Me apresente seus comandos", "/help"],
+  ["Rode Python no terminal", "python print(sum(range(101)))"],
+  ["Crie uma landing page", "crie uma landing page NEXUS para eu ver no navegador"],
+  ["Testar integração n8n", "/n8n ping"]
+];
+function renderChips(){
+  document.getElementById("chips").innerHTML = chipsData.map(([t, c]) => `<span class="chip" onclick="document.getElementById('chatText').value=${JSON.stringify(c)};sendMsg()">${t}</span>`).join("");
+}
+function addMsg(kind, text, who){
+  const sc = document.getElementById("chatScroll");
+  const d = document.createElement("div");
+  d.className = "msg " + kind;
+  if (kind === "bot") d.innerHTML = `<div class="who">${who || "NEXUS"} <small>· ${(new Date()).toLocaleTimeString("pt-BR",{hour:"2-digit",minute:"2-digit"})}</small></div>`;
+  d.appendChild(document.createTextNode(text));
+  sc.appendChild(d);
+  sc.scrollTop = sc.scrollHeight;
+  return d;
+}
+function addTyping(){
+  const sc = document.getElementById("chatScroll");
+  const d = document.createElement("div");
+  d.className = "typing"; d.id = "typing";
+  d.innerHTML = "<i></i><i></i><i></i>";
+  sc.appendChild(d); sc.scrollTop = sc.scrollHeight;
+}
+function removeTyping(){ document.getElementById("typing")?.remove() }
+
+async function sendMsg(){
+  const ta = document.getElementById("chatText");
+  const text = ta.value.trim();
+  if (!text) return;
+  ta.value = "";
+  addMsg("user", text);
+  addTyping();
+
+  try {
+    if (text.startsWith("/")) { await handleCommand(text); }
+    else { await routeLLM(text); }
+  } catch (e) {
+    addMsg("bot", "Deu erro aqui: " + e.message, "sistema");
+  }
+  removeTyping();
+}
+
+async function handleCommand(cmd){
+  const [c, ...rest] = cmd.slice(1).split(/\s+/);
+  const arg = rest.join(" ");
+  if (c === "help") {
+    addMsg("bot", "Comandos do agente:\n/help · esta ajuda\n/python <código> · roda Python no sandbox\n/js <código> · roda JavaScript\n/n8n <ação> · dispara fluxo no n8n (configure nas Chaves)\n/wa <mensagem> · envia pelo WhatsApp Bridge\n/prompt <tema> · biblioteca de prompts prontos\n/browser <url> · abre no navegador ao vivo\n/plugin <nome> · instala plugin do marketplace\n/model · modelo atual e status das chaves", "CLI");
+    return;
+  }
+  if (c === "python") { addMsg("bot", "Rodei no sandbox:\n" + await runPython(arg), "python"); return; }
+  if (c === "js") { try { addMsg("bot", "→ " + String(eval(arg)), "js sandbox") } catch(e){ addMsg("bot", "Erro: " + e.message, "js sandbox") } return; }
+  if (c === "n8n") { addMsg("bot", await callWebhook("k_n8n", {action: arg || "ping", source: "nexus-super-agent"}), "n8n"); return; }
+  if (c === "wa") { addMsg("bot", await callWebhook("k_wa_webhook", {message: arg, source: "nexus-super-agent", channel: "whatsapp"}), "whatsapp bridge"); return; }
+  if (c === "browser") { go("browser"); document.getElementById("urlBar").value = arg.startsWith("http") ? arg : "https://" + arg; navBrowser(); addMsg("bot", "Abri " + arg + " no navegador ao vivo.", "navegador"); return; }
+  if (c === "prompt") { addMsg("bot", promptLibrary(arg), "prompt library"); return; }
+  if (c === "model") { addMsg("bot", "Modelo: " + curModel() + "\nChaves salvas: " + ["openrouter","nvidia","minimax","gemini"].filter(m => LS.get("k_" + m)).join(", ") || "nenhuma", "config"); return; }
+  if (c === "plugin") { const p = PLUGINS.find(p => p.id === arg || p.name.toLowerCase().includes(arg.toLowerCase())); if (p) { p.installed = true; savePlugs(); renderPlugins(); addMsg("bot", "Plugin instalado: " + p.name, "marketplace"); } else addMsg("bot", "Não achei o plugin: " + arg, "marketplace"); return; }
+  addMsg("bot", "Comando desconhecido: /" + c + ". Digite /help.", "CLI");
+}
+
+function curModel(){
+  const sel = document.getElementById("modelSel").value;
+  const id = document.getElementById("modelId").value.trim();
+  return sel === "demo" ? "modo demo local" : (sel + (id ? " · " + id : ""));
+}
+
+/* ---- Roteador multi-modelo ---- */
+async function routeLLM(userText){
+  const sel = document.getElementById("modelSel").value;
+  const key = LS.get("k_" + sel);
+  const modelId = document.getElementById("modelId").value.trim();
+  const sys = "Você é o NEXUS Super Agent, um agente de IA brasileiro, direto, amigável e profissional. Responda em português do Brasil, no estilo você-e-eu, sem jargão. Se pedirem código, entregue código pronto. Se pedirem algo que o app faz (terminal, navegador, plugins), cite os comandos disponíveis (/help).";
+  const history = LS.get("nexus_history", "[]");
+  let hist = [];
+  try { hist = JSON.parse(history) } catch(e){}
+
+  try {
+    let reply = null;
+    if (sel === "demo" || (sel !== "custom" && !key)) {
+      reply = demoReply(userText);
+      await sleep(700);
+    } else if (sel === "gemini") {
+      reply = await callGemini(key, modelId || "gemini-2.0-flash", sys, userText, hist);
+    } else {
+      reply = await callOpenAICompat(sel, key, modelId, sys, userText, hist);
+    }
+    hist.push({u: userText, a: reply});
+    LS.set("nexus_history", JSON.stringify(hist.slice(-20)));
+    addMsg("bot", reply, sel === "demo" ? "núcleo local" : sel);
+    speak(reply);
+  } catch (e) {
+    addMsg("bot", "Não consegui falar com o modelo (" + e.message + "). No modo demo eu funciono sem chave: selecione 'Modo Demo' ou configure sua chave em ⚙️ Chaves.", "sistema");
+  }
+}
+
+async function callOpenAICompat(sel, key, modelId, sys, userText, hist){
+  const urls = {
+    openrouter: "https://openrouter.ai/api/v1/chat/completions",
+    nvidia: "https://integrate.api.nvidia.com/v1/chat/completions",
+    minimax: "https://api.minimax.chat/v1/text/chatcompletion_v2",
+    custom: LS.get("k_custom", "")
+  };
+  const defModels = { openrouter: "google/gemini-2.0-flash-exp:free", nvidia: "meta/llama-3.1-8b-instruct", minimax: "abab6.5s-chat", custom: "gpt-4o-mini" };
+  const body = JSON.stringify({
+    model: modelId || defModels[sel],
+    messages: [{role: "system", content: sys}, ...hist.slice(-6).map(h => ({role: "user", content: h.u})), {role: "user", content: userText}],
+    temperature: 0.7, max_tokens: 1024
+  });
+  const headers = { "Content-Type": "application/json", "Authorization": "Bearer " + key };
+  if (sel === "openrouter") headers["HTTP-Referer"] = location.origin || "https://github.com/nicorudorlk22-gif/nexus-super-agent";
+  const r = await fetch(urls[sel], { method: "POST", headers, body });
+  if (!r.ok) throw new Error("HTTP " + r.status + " " + (await r.text()).slice(0, 120));
+  const j = await r.json();
+  return j.choices?.[0]?.message?.content ?? "(resposta vazia)";
+}
+
+async function callGemini(key, modelId, sys, userText, hist){
+  const url = "https://generativelanguage.googleapis.com/v1beta/models/" + (modelId || "gemini-2.0-flash") + ":generateContent?key=" + key;
+  const contents = hist.slice(-6).map(h => ({role: "model", parts: [{text: h.a}]}, {role: "user", parts: [{text: h.u}]}));
+  contents.push({role: "user", parts: [{text: userText}]});
+  const r = await fetch(url, { method: "POST", headers: {"Content-Type": "application/json"}, body: JSON.stringify({ system_instruction: {parts: [{text: sys}]}, contents, generationConfig: {temperature: 0.7, maxOutputTokens: 1024} }) });
+  if (!r.ok) throw new Error("HTTP " + r.status);
+  const j = await r.json();
+  return j.candidates?.[0]?.content?.parts?.[0]?.text ?? "(resposta vazia)";
+}
+
+function demoReply(t){
+  const s = t.toLowerCase();
+  if (/land|site|página|pagina/.test(s)) return "Fechado. Cole isto no campo do navegador e clique em Preview HTML:\n\n<h1 style=\"font-family:sans-serif;background:#07090c;color:#d4af37;padding:60px;text-align:center\">NEXUS</h1><p style=\"text-align:center;color:#22c55e\">Seu ecossistema digital, no ar.</p>\n\nSe quiser, eu mando versão completa com botões e animação.";
+  if (/python/.test(s)) return "Consigo rodar Python de verdade aqui no sandbox (Pyodide/WebAssembly). Exemplos:\n/python print(sum(range(101)))\n/python import math; print(math.factorial(50))\nNo terminal também: digite python e cole o código.";
+  if (/whats|zap/.test(s)) return "O WhatsApp conecta por bridge: configure o webhook em ⚙️ (WhatsApp Bridge) e use /wa <mensagem>. Com n8n ou Base44 você recebe e responde mensagens reais.";
+  if (/olá|ola|oi|bom dia|boa tarde|boa noite|e a[íi]/.test(s)) return "E aí! Tudo certo por aqui. Posso conversar, programar, rodar Python, abrir sites e automatizar fluxos. Por onde começamos?";
+  if (/quem|o que você|voce/.test(s)) return "Sou o NEXUS Super Agent: open source, roda 100% no seu navegador, fala e escuta, e tem marketplace de plugins. Multi-modelo: NVIDIA NIM, MiniMax, Gemini, OpenRouter e qualquer servidor OpenAI-compatível.";
+  if (/plug|marketplace|extens/.test(s)) return "O marketplace tem integrações (WhatsApp, n8n, Supabase, Firebase), ferramentas de dev, voz e visual. Abra a aba 🧩 e instale o que quiser. Tudo salvo no seu navegador.";
+  return "Entendi: \"" + t + "\".\nNo modo demo eu respondo localmente sem gastar tokens. Pra conversa completa, coloque uma chave grátis (OpenRouter ou Gemini) em ⚙️ Chaves e escolha o modelo no topo. Enquanto isso, posso: rodar código (/python, /js), abrir sites (/browser), disparar automações (/n8n) e enviar pelo WhatsApp (/wa).";
+}
+
+/* ---- Biblioteca de prompts ---- */
+function promptLibrary(topic){
+  const lib = {
+    copy: "PROMPT DE COPY QUE VENDE\n\nVocê é um copywriter brasileiro. Escreva [peça] para [produto], público [público]. Estrutura: dor real, agitação honesta, solução, prova social, CTA. Tom: direto, você-e-eu, sem jargão. Proibido prometer resultado garantido.",
+    codigo: "PROMPT DE CÓDIGO\n\nVocê é um engenheiro sênior. Tarefa: [objetivo]. Restrições: código completo e rodável, comentários curtos em pt-BR, sem placeholder. Depois do código, liste o que testar.",
+    estudo: "PROMPT DE ESTUDO ACELERADO\n\nExplique [tema] como se eu fosse iniciante curioso. Depois: 1) analogia do dia a dia, 2) explicação técnica simples, 3) três exercícios práticos, 4) o que estudar a seguir.",
+    "": "Temas disponíveis: copy, codigo, estudo. Exemplo: /prompt copy"
+  };
+  const s = (topic || "").toLowerCase();
+  return lib[s] || lib[s.split(" ")[0]] || lib[""];
+}
+
+/* ============ TERMINAL ============ */
+let term = null;
+const FILES = {
+  "bem-vindo.txt": "NEXUS Super Agent © 2026\nTerminal virtual com Python (Pyodide), comandos locais e integrações.\nDigite: help",
+  "objetivos.md": "# Objetivos do projeto\n- multi-modelo com chaves grátis\n- marketplace estilo Acode\n- voz em pt-BR\n- integração WhatsApp, n8n, Supabase\n"
+};
+function initTerm(){
+  if (term) { term.focus(); return; }
+  term = new Terminal({
+    cursorBlink: true, fontSize: 13,
+    theme: { background: "#0a0f0d", foreground: "#d8e2dc", cursor: "#d4af37", green: "#22c55e" },
+    fontFamily: "Consolas, monospace"
+  });
+  term.open(document.getElementById("term"));
+  let buf = "";
+  const prompt = () => term.write("\r\n\x1b[38;5;178magent@nexus\x1b[0m:\x1b[38;5;46m~\x1b[0m$ ");
+  term.write("\x1b[38;5;178m  NEXUS\x1b[0m terminal · sandbox isolado · digite \x1b[1mhelp\x1b[0m\r\n");
+  prompt();
+  term.onData(async d => {
+    if (d === "\r") {
+      term.write("\r\n");
+      await runShell(buf.trim());
+      buf = ""; prompt();
+    } else if (d === "\u007f") {
+      if (buf.length) { buf = buf.slice(0, -1); term.write("\b \b"); }
+    } else if (d.charCodeAt(0) > 31) { buf += d; term.write(d); }
+  });
+}
+async function runShell(line){
+  if (!line) return;
+  const [cmd, ...args] = line.split(/\s+/);
+  const arg = args.join(" ");
+  const w = t => term.write(t + "\r\n");
+  try {
+    switch (cmd) {
+      case "help": w("comandos:\r\n  help             esta ajuda\r\n  ls / cat <arq>   arquivos locais\r\n  echo <txt>       imprime\r\n  python <cod>     roda Python real (Pyodide)\r\n  js <cod>         roda JavaScript\r\n  open <url>       abre no navegador ao vivo\r\n  install <plugin> instala plugin do marketplace\r\n  wa <msg>         envia pelo WhatsApp Bridge\r\n  n8n <acao>       dispara automação\r\n  neofetch         info do sistema\r\n  date / whoami / clear"); break;
+      case "ls": w(Object.keys(FILES).join("   ")); break;
+      case "cat": w(FILES[arg] ?? "cat: " + arg + ": arquivo não encontrado"); break;
+      case "echo": w(arg); break;
+      case "date": w(new Date().toLocaleString("pt-BR")); break;
+      case "whoami": w("agent — NEXUS Super Agent (sandbox isolado, sem acesso ao seu sistema)"); break;
+      case "clear": term.clear(); return;
+      case "neofetch": w("\x1b[38;5;178m   ◆ NEXUS    \x1b[0m OS: navegador (sandbox)\r\n   ◆ SUPER   Kernel: WebAssembly + JS\r\n   ◆ AGENT   Modelo: " + curModel() + "\r\n            Plugins: " + PLUGINS.filter(p=>p.installed).length + "/" + PLUGINS.length + "\r\n            Python: " + (pyodide ? "Pyodide ✓" : "disponível (rode 'python ...')") + "\r\n            Voz: " + (ttsOn ? "fala ✓" : "mudo")); break;
+      case "open": go("browser"); document.getElementById("urlBar").value = arg.startsWith("http") ? arg : "https://" + arg; navBrowser(); w("abri " + arg + " no navegador ao vivo"); break;
+      case "install": { const p = PLUGINS.find(p => p.id === arg || p.name.toLowerCase().includes((arg||"").toLowerCase())); if (p) { p.installed = true; savePlugs(); renderPlugins(); w("plugin instalado: " + p.name); } else w("install: plugin não encontrado: " + arg); break; }
+      case "wa": w(await callWebhook("k_wa_webhook", {message: arg, source: "terminal"})); break;
+      case "n8n": w(await callWebhook("k_n8n", {action: arg, source: "terminal"})); break;
+      case "python": w("→ " + await runPython(arg)); break;
+      case "js": w("→ " + String(eval(arg))); break;
+      default: w(cmd + ": comando não encontrado. digite help");
+    }
+  } catch (e) { w("erro: " + e.message); }
+}
+async function runPython(code){
+  if (!code) return "uso: python <código>. ex.: python print(sum(range(101)))";
+  if (!pyodide) {
+    if (!pyLoading) {
+      pyLoading = true;
+      document.getElementById("sbPy").textContent = "carregando Pyodide...";
+      const s = document.createElement("script");
+      s.src = "https://cdn.jsdelivr.net/pyodide/v0.26.4/full/pyodide.js";
+      document.head.appendChild(s);
+      await new Promise(r => s.onload = r);
+      pyodide = await loadPyodide({indexURL: "https://cdn.jsdelivr.net/pyodide/v0.26.4/full/"});
+      document.getElementById("sbPy").textContent = "Python 3.12 ✓";
+    } else return "Pyodide ainda está carregando, tente de novo em alguns segundos";
+  }
+  try {
+    pyodide.runPython(`import sys, io\nsys.stdout = io.StringIO()\n`);
+    const result = pyodide.runPython(code);
+    const out = pyodide.runPython("sys.stdout.getvalue()").trim();
+    return [out, (result !== undefined ? String(result) : "")].filter(Boolean).join("\n") || "(sem saída)";
+  } catch (e) { return "erro Python: " + e.message; }
+}
+
+/* ============ NAVEGADOR ============ */
+function navBrowser(){
+  const u = document.getElementById("urlBar").value.trim();
+  if (!u) return;
+  if (u.startsWith("<")) { previewHTML(); return; }
+  document.getElementById("webFrame").src = u.startsWith("http") ? u : "https://" + u;
+}
+function previewHTML(){
+  const raw = document.getElementById("urlBar").value.trim();
+  const html = raw.startsWith("http") ? "<!DOCTYPE html><html><body style='font-family:sans-serif;padding:40px'>Cole HTML direto na barra e clique em Preview HTML.</body></html>" : raw;
+  document.getElementById("webFrame").srcdoc = html;
+}
+function openInNewTab(){
+  const u = document.getElementById("urlBar").value.trim();
+  window.open(u.startsWith("http") ? u : "https://" + u, "_blank");
+}
+
+/* ============ PLUGINS ============ */
+const PLUGINS = [
+  {id:"wa-bridge", icon:"💬", name:"WhatsApp Bridge", cat:"Integração", desc:"Conecta o agente ao WhatsApp via webhook (Base44, n8n ou API Business). Envie e receba mensagens com /wa.", effect:"usa a config de WhatsApp em ⚙️"},
+  {id:"n8n-flow", icon:"🔄", name:"n8n Automação", cat:"Automação", desc:"Dispara fluxos do n8n a partir do chat e do terminal. Ideal para rotinas de marketing e vendas.", effect:"comando /n8n fica ativo"},
+  {id:"supabase-mem", icon:"🐘", name:"Memória Supabase", cat:"Integração", desc:"Salva o histórico da conversa no seu Supabase. Memória real entre sessões e dispositivos.", effect:"requer config Supabase"},
+  {id:"firebase-sync", icon:"🔥", name:"Firebase Sync", cat:"Integração", desc:"Sincronização de configuração e histórico via Firebase. Multi-dispositivo.", effect:"roadmap v1.1"},
+  {id:"opencode", icon:"🤖", name:"OpenCode Agent Loop", cat:"Dev", desc:"Modo agente: planeja, executa e revisa em loop, chamando os comandos do terminal.", effect:"ativar em Dev → agente"},
+  {id:"py-lab", icon:"🐍", name:"Python Lab", cat:"Dev", desc:"Pyodide completo com bibliotecas embutidas. Rode análise e scripts sem servidor.", effect:"já embutido"},
+  {id:"js-runner", icon:"⚡", name:"JS Runner", cat:"Dev", desc:"Executa JavaScript no sandbox com /js e no terminal.", effect:"já embutido"},
+  {id:"voice-pro", icon:"🎙️", name:"Voz Pro (pt-BR)", cat:"Voz e Mídia", desc:"Reconhecimento de fala e voz de resposta em português, com ajuste de velocidade.", effect:"botões 🎤 e 🔈"},
+  {id:"vision-cam", icon:"📸", name:"Vision Cam", cat:"Voz e Mídia", desc:"Captura da câmera e envio de imagem para modelos com visão (roadmap de captura).", effect:"roadmap v1.1"},
+  {id:"gold-theme", icon:"🏆", name:"Tema NEXUS Gold", cat:"Visual", desc:"Identidade preto, dourado e verde com animações fluidas.", effect:"tema padrão"},
+  {id:"matrix", icon:"🌧️", name:"Chuva Matrix", cat:"Visual", desc:"Modo visual inspirado em terminal clássico para o fundo animado.", effect:"alterna partículas"},
+  {id:"prompt-lib", icon:"📚", name:"Prompt Library BR", cat:"Produtividade", desc:"Prompts prontos em português para copy, código e estudo. Use /prompt.", effect:"comando /prompt"}
+];
+PLUGINS.forEach(p => p.installed = false);
+function savePlugs(){
+  LS.set("nexus_plugins", JSON.stringify(PLUGINS.map(p => p.id)));
+  applyPlugins();
+}
+function applyPlugins(){
+  const on = PLUGINS.filter(p => p.installed);
+  document.getElementById("sbPlug").textContent = on.length + "/" + PLUGINS.length;
+  document.getElementById("plugBadge").textContent = on.length;
+  matrixOn = PLUGINS.find(p => p.id === "matrix")?.installed;
+  document.getElementById("engineTag").textContent = curModel();
+}
+let matrixOn = false;
+function renderPlugins(){
+  const q = (document.getElementById("plugSearch")?.value || "").toLowerCase();
+  const c = document.getElementById("plugCat")?.value || "";
+  const g = document.getElementById("plugGrid");
+  const saved = JSON.parse(LS.get("nexus_plugins", "[]"));
+  PLUGINS.forEach(p => p.installed = saved.includes(p.id) || ["py-lab","js-runner","voice-pro","gold-theme","prompt-lib"].includes(p.id));
+  g.innerHTML = PLUGINS
+    .filter(p => (!q || p.name.toLowerCase().includes(q) || p.desc.toLowerCase().includes(q)) && (!c || p.cat === c))
+    .map(p => `
+    <div class="plug ${p.installed ? "installed" : ""}">
+      <div class="icon">${p.icon}</div>
+      <h3>${p.name}</h3>
+      <p>${p.desc}</p>
+      <div class="meta"><span class="cat">${p.cat}</span><span class="state">${p.installed ? "● instalado" : "○ disponível"}</span></div>
+      <div class="hint">efeito: ${p.effect}</div>
+      <div class="actions">
+        <button class="btn ${p.installed ? "" : "green"}" onclick="togglePlug('${p.id}')">${p.installed ? "Remover" : "Instalar"}</button>
+        <button class="btn" onclick="addMsg('user','/plugin ${p.id}');sendMsg()">Testar</button>
+      </div>
+    </div>`).join("");
+  applyPlugins();
+}
+function togglePlug(id){
+  const p = PLUGINS.find(p => p.id === id);
+  p.installed = !p.installed;
+  savePlugs(); renderPlugins();
+}
+
+/* ============ INTEGRAÇÕES ============ */
+function saveKeys(){
+  ["k_openrouter","k_nvidia","k_minimax","k_gemini","k_custom","k_custom_key","k_wa_webhook","k_wa_token","k_n8n","k_supabase","k_supabase_key","k_firebase"].forEach(k => {
+    const el = document.getElementById(k);
+    if (el) LS.set(k, el.value.trim());
+  });
+  document.getElementById("keysMsg").innerHTML = '<span class="ok-msg">✓ salvo no navegador</span>';
+  document.getElementById("engineTag").textContent = curModel();
+  setTimeout(() => document.getElementById("keysMsg").innerHTML = "", 2500);
+}
+function loadKeys(){
+  ["k_openrouter","k_nvidia","k_minimax","k_gemini","k_custom","k_custom_key","k_wa_webhook","k_wa_token","k_n8n","k_supabase","k_supabase_key","k_firebase"].forEach(k => {
+    const el = document.getElementById(k);
+    if (el) el.value = LS.get(k, "");
+  });
+}
+async function callWebhook(keyId, payload){
+  const url = LS.get(keyId, "");
+  if (!url) return "⚠️ configure o webhook em ⚙️ Configurações primeiro";
+  const headers = {"Content-Type": "application/json"};
+  const tok = LS.get("k_wa_token", "");
+  if (keyId === "k_wa_webhook" && tok) headers["Authorization"] = "Bearer " + tok;
+  try {
+    const r = await fetch(url, {method: "POST", headers, body: JSON.stringify(payload)});
+    return "✓ enviado · HTTP " + r.status + (r.ok ? "" : " (verifique o endpoint)");
+  } catch (e) { return "⚠️ não consegui alcançar o webhook (CORS ou URL). Use um bridge que aceite chamadas do navegador, ou rode pelo n8n/servidor."; }
+}
+async function testWA(){
+  const m = document.getElementById("waMsg");
+  m.innerHTML = '<span class="hint">testando...</span>';
+  const r = await callWebhook("k_wa_webhook", {test: true, source: "nexus-super-agent"});
+  m.innerHTML = r.startsWith("✓") ? '<span class="ok-msg">' + r + '</span>' : '<span class="err-msg">' + r + '</span>';
+}
+async function testN8N(){
+  const m = document.getElementById("n8nMsg");
+  m.innerHTML = '<span class="hint">testando...</span>';
+  const r = await callWebhook("k_n8n", {test: true, action: "ping"});
+  m.innerHTML = r.startsWith("✓") ? '<span class="ok-msg">' + r + '</span>' : '<span class="err-msg">' + r + '</span>';
+}
+
+/* ============ VOZ ============ */
+function speak(text){
+  if (!ttsOn || !window.speechSynthesis) return;
+  const clean = text.replace(/[*_`#>/]|```.*?```/gs, "").slice(0, 500);
+  const u = new SpeechSynthesisUtterance(clean);
+  u.lang = "pt-BR";
+  const v = speechSynthesis.getVoices().find(v => v.lang.startsWith("pt"));
+  if (v) u.voice = v;
+  u.rate = 1.05;
+  speechSynthesis.cancel();
+  speechSynthesis.speak(u);
+}
+function toggleTTS(){
+  ttsOn = !ttsOn;
+  document.getElementById("ttsBtn").textContent = ttsOn ? "🔊" : "🔈";
+  document.getElementById("ttsBtn").classList.toggle("rec", ttsOn);
+  document.getElementById("sbVoice").textContent = ttsOn ? "🔊 fala" : "🔇";
+  if (ttsOn) speak("Voz ativada. Agora eu falo com você.");
+}
+function toggleMic(){
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  const btn = document.getElementById("micBtn");
+  if (!SR) { addMsg("bot", "Seu navegador não tem reconhecimento de voz. Use o Chrome ou Edge.", "sistema"); return; }
+  if (recording) { rec.stop(); return; }
+  rec = new SR();
+  rec.lang = "pt-BR"; rec.interimResults = false;
+  rec.onstart = () => { recording = true; btn.classList.add("rec"); document.getElementById("sbVoice").textContent = "🎤 ouvindo"; };
+  rec.onend = () => { recording = false; btn.classList.remove("rec"); document.getElementById("sbVoice").textContent = ttsOn ? "🔊 fala" : "🔇"; };
+  rec.onerror = e => { addMsg("bot", "Não consegui ouvir: " + e.error, "voz"); };
+  rec.onresult = e => {
+    const t = e.results[0][0].transcript;
+    document.getElementById("chatText").value = t;
+    sendMsg();
+  };
+  rec.start();
+}
+
+/* ============ VISUAL ============ */
+function setAccent(c){ document.documentElement.style.setProperty("--accent", c); }
+const canvas = document.createElement("canvas");
+canvas.style.cssText = "position:fixed;inset:0;width:100%;height:100%";
+document.getElementById("particles").appendChild(canvas);
+const ctx = canvas.getContext("2d");
+let dots = [];
+function resizeCv(){ canvas.width = innerWidth; canvas.height = innerHeight; }
+resizeCv(); addEventListener("resize", resizeCv);
+for (let i = 0; i < 70; i++) dots.push({x: Math.random()*innerWidth, y: Math.random()*innerHeight, vx: (Math.random()-.5)*.35, vy: (Math.random()-.5)*.35, r: Math.random()*1.8+.4});
+function drawCv(){
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  dots.forEach(d => {
+    d.x += d.vx; d.y += d.vy;
+    if (d.x < 0 || d.x > canvas.width) d.vx *= -1;
+    if (d.y < 0 || d.y > canvas.height) d.vy *= -1;
+    ctx.beginPath();
+    ctx.arc(d.x, d.y, d.r, 0, 7);
+    ctx.fillStyle = matrixOn ? "rgba(34,197,94,.7)" : "rgba(212,175,55,.55)";
+    ctx.fill();
+  });
+  for (let i = 0; i < dots.length; i++) for (let j = i+1; j < dots.length; j++) {
+    const dx = dots[i].x - dots[j].x, dy = dots[i].y - dots[j].y, dist = dx*dx + dy*dy;
+    if (dist < 12000) {
+      ctx.strokeStyle = (matrixOn ? "rgba(34,197,94," : "rgba(212,175,55,") + (0.12 * (1 - dist/12000)) + ")";
+      ctx.beginPath(); ctx.moveTo(dots[i].x, dots[i].y); ctx.lineTo(dots[j].x, dots[j].y); ctx.stroke();
+    }
+  }
+  requestAnimationFrame(drawCv);
+}
+drawCv();
+function tickClock(){
+  const n = new Date();
+  document.getElementById("sbClock").textContent = n.toLocaleTimeString("pt-BR", {hour: "2-digit", minute: "2-digit"});
+  document.getElementById("sbDate").textContent = n.toLocaleDateString("pt-BR", {weekday: "short", day: "2-digit", month: "short"});
+}
+setInterval(tickClock, 1000); tickClock();
+document.getElementById("modelSel").addEventListener("change", () => {
+  document.getElementById("engineTag").textContent = curModel();
+  document.getElementById("sbModel").textContent = document.getElementById("modelSel").value;
+  const defIds = {openrouter: "google/gemini-2.0-flash-exp:free", nvidia: "meta/llama-3.1-8b-instruct", gemini: "gemini-2.0-flash", minimax: "abab6.5s-chat", custom: "", demo: ""};
+  document.getElementById("modelId").value = defIds[document.getElementById("modelSel").value] || "";
+});
+document.getElementById("chatText").addEventListener("keydown", e => {
+  if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendMsg(); }
+});
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+loadKeys(); renderChips();
+</script>
+</body>
+</html>
