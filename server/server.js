@@ -2,6 +2,8 @@
 "use strict";
 const http = require("http");
 const crypto = require("crypto");
+const fs = require("fs");
+const path = require("path");
 const { CATALOG, provider } = require("./lib/providers");
 const { vault, vfs, execLimited } = require("./lib/core");
 const { callProvider, complete, routeWithFallback, streamChunks } = require("./lib/ai");
@@ -208,6 +210,21 @@ async function handle(req, res, url) {
 
   /* ---------- AUDITORIA ---------- */
   if (route === "/api/audit" && method === "GET") return json(res, 200, { log: auditLog.slice(-100) });
+
+  /* ---------- FRONTEND ESTÁTICO (index.html) ---------- */
+  if (method === "GET" && !route.startsWith("/api/")) {
+    const root = path.join(__dirname, "..");
+    const rel = route === "/" ? "/index.html" : decodeURIComponent(url.pathname);
+    const fp = path.normalize(path.join(root, rel));
+    const types = { ".html": "text/html; charset=utf-8", ".js": "text/javascript; charset=utf-8", ".css": "text/css; charset=utf-8", ".json": "application/json; charset=utf-8", ".svg": "image/svg+xml", ".png": "image/png", ".jpg": "image/jpeg", ".ico": "image/x-icon", ".woff2": "font/woff2" };
+    if (fp.startsWith(root) && fs.existsSync(fp) && fs.statSync(fp).isFile()) {
+      res.writeHead(200, { "Content-Type": types[path.extname(fp).toLowerCase()] || "application/octet-stream", "Cache-Control": "no-cache" });
+      fs.createReadStream(fp).pipe(res);
+      return;
+    }
+    const idx = path.join(root, "index.html");
+    if (fs.existsSync(idx)) { res.writeHead(200, { "Content-Type": "text/html; charset=utf-8", "Cache-Control": "no-cache" }); fs.createReadStream(idx).pipe(res); return; }
+  }
 
   json(res, 404, { error: "rota não encontrada: " + method + " " + route, docs: "GET /api/status, /api/models, /api/agents; POST /api/chat, /api/agents/run, /api/terminal/exec, /api/integrations/webhook; PUT/GET/DELETE /api/keys; GET/POST/PUT/DELETE /api/files" });
 }

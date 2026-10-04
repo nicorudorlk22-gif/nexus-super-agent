@@ -1,0 +1,27 @@
+# NEXUS Super Agent — ambiente de desenvolvimento Base44
+# Roda o backend Node (zero dependências) a partir do código-fonte clonado,
+# servindo também o index.html na porta 3000. Edits aparecem sem rebuild.
+services:
+  nexus:
+    image: node:20-alpine
+    working_dir: /app
+    volumes:
+      - ./:/app
+    ports:
+      - "3000:3000"
+    environment:
+      - PORT=3000
+      - NEXUS_WORKSPACE=/app/server/data/workspace
+      - NEXUS_CORS=*
+      - NODE_ENV=development
+    env_file:
+      - /run/base44/app.env
+    # node --watch reinicia o servidor automaticamente ao editar arquivos do server/
+    command: ["node", "--watch", "server/server.js"]
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:3000/api/status"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    restart: on-failure
