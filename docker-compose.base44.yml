@@ -1,0 +1,32 @@
+# NEXUS AI — ambiente de desenvolvimento Base44
+# Backend Node (zero deps) servindo a API + o frontend index.html na porta 3000.
+# Bind-mount do source + node --watch para live reload do backend.
+services:
+  nexus:
+    image: node:20-alpine
+    container_name: nexus-dev
+    working_dir: /app
+    command: ["sh", "-ec", "node --watch server/server.js"]
+    ports:
+      - "3000:3000"
+    environment:
+      PORT: "3000"
+      NEXUS_WORKSPACE: /workspace
+      NEXUS_CORS: "*"
+      NEXUS_MASTER_KEY: ${NEXUS_MASTER_KEY:-}
+      BASE44_PUBLIC_HOST_SUFFIX: ${BASE44_PUBLIC_HOST_SUFFIX:-}
+    env_file:
+      - /run/base44/app.env
+    volumes:
+      - ./:/app
+      - nexus-workspace:/workspace
+    restart: on-failure
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:3000/api/status"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+
+volumes:
+  nexus-workspace:

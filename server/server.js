@@ -2,6 +2,8 @@
 "use strict";
 const http = require("http");
 const crypto = require("crypto");
+const fs = require("fs");
+const path = require("path");
 const { CATALOG, provider } = require("./lib/providers");
 const { vault, vfs, execLimited } = require("./lib/core");
 const { callProvider, complete, routeWithFallback, streamChunks } = require("./lib/ai");
@@ -45,6 +47,29 @@ async function handle(req, res, url) {
   if (method === "OPTIONS") { res.writeHead(204, { "Access-Control-Allow-Origin": process.env.NEXUS_CORS || "*", "Access-Control-Allow-Headers": "content-type,authorization,x-nexus-token", "Access-Control-Allow-Methods": "GET,POST,PUT,DELETE" }); return res.end(); }
 
   if (!tokenOK(req)) return json(res, 401, { error: "não autorizado" });
+
+  /* ---------- ESTÁTICO (frontend index.html) ---------- */
+  if (route === "/" && method === "GET") {
+    const file = path.join(__dirname, "..", "index.html");
+    try {
+      const html = fs.readFileSync(file, "utf8");
+      res.writeHead(200, { "Content-Type": "text/html; charset=utf-8", "Access-Control-Allow-Origin": process.env.NEXUS_CORS || "*" });
+      return res.end(html);
+    } catch (e) { return json(res, 500, { error: "index.html não encontrado" }); }
+  }
+
+  /* ---------- ESTÁTICOS (js/, css/, assets) ---------- */
+  if (route.startsWith("/js/") && method === "GET") {
+    const rel = route.slice(1);
+    const file = path.join(__dirname, "..", rel);
+    try {
+      const data = fs.readFileSync(file, "utf8");
+      const ext = path.extname(file).slice(1);
+      const types = { js: "application/javascript; charset=utf-8", css: "text/css; charset=utf-8", json: "application/json; charset=utf-8" };
+      res.writeHead(200, { "Content-Type": types[ext] || "text/plain; charset=utf-8", "Access-Control-Allow-Origin": process.env.NEXUS_CORS || "*" });
+      return res.end(data);
+    } catch (e) { return json(res, 404, { error: "arquivo não encontrado" }); }
+  }
 
   /* ---------- STATUS ---------- */
   if (route === "/api/status" && method === "GET") {

@@ -1,0 +1,13 @@
+{
+  "previewPort": 3000,
+  "healthPath": "/api/status",
+  "startCommand": "docker compose -f docker-compose.base44.yml up -d",
+  "secrets": [
+    {
+      "name": "NEXUS_MASTER_KEY",
+      "description": "Chave mestra do cofre AES-256-GCM do backend (criptografia das API keys). Defina um valor aleatório longo em produção.",
+      "requiredAtBoot": true,
+      "generatedForDevelopment": true
+    }
+  ]
+}

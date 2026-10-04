@@ -3,890 +3,655 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>NEXUS Super Agent</title>
-<meta name="description" content="Super agente de IA open source: multi-modelo, terminal, Python no navegador, voz e marketplace de plugins.">
+<title>NEXUS AI — Super Agent</title>
+<meta name="description" content="NEXUS AI Super Agent: multi-modelo, terminal, Python no navegador, agentes, marketplace e voz. Open source.">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/xterm@5.3.0/css/xterm.min.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/highlight.js@11.9.0/styles/github-dark.min.css">
 <style>
 :root{
-  --bg:#07090c; --bg2:#0c1014; --card:#10151c; --card2:#151c25;
-  --gold:#d4af37; --green:#22c55e; --cyan:#38bdf8; --red:#ef4444;
-  --text:#e5e7eb; --muted:#8b95a5; --border:#1e2833;
-  --accent:var(--gold);
+  --bg:#050508; --bg2:#0a0a12; --card:#0d0d14; --card2:#12121c; --card3:#151520;
+  --purple:#8b5cf6; --purple-d:#7c3aed; --blue:#3b82f6; --green:#10b981; --red:#ef4444;
+  --text:#ffffff; --muted:#9ca3af; --muted2:#6b7280; --border:#1e1e2a; --border2:#2a2a3a;
+  --accent:var(--purple);
+  --radius:14px;
 }
 *{margin:0;padding:0;box-sizing:border-box}
 html,body{height:100%}
-body{background:var(--bg);color:var(--text);font-family:'Segoe UI',system-ui,-apple-system,sans-serif;overflow:hidden}
-#particles{position:fixed;inset:0;z-index:0;opacity:.55}
-.app{position:relative;z-index:1;display:flex;flex-direction:column;height:100vh}
-/* BOOT */
-#boot{position:fixed;inset:0;background:var(--bg);z-index:99;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:14px;transition:opacity .8s}
-#boot .logo{font-size:34px;font-weight:800;letter-spacing:6px;color:var(--gold);text-shadow:0 0 30px rgba(212,175,55,.6);animation:pulse 1.6s infinite}
-#boot .sub{color:var(--muted);font-size:12px;letter-spacing:3px}
-#bootlog{font-family:monospace;font-size:12px;color:var(--green);min-height:120px;white-space:pre-line;text-align:left;width:340px}
-@keyframes pulse{0%,100%{opacity:1}50%{opacity:.55}}
-/* HEADER */
-header{display:flex;align-items:center;gap:14px;padding:10px 16px;background:linear-gradient(180deg,#0d1218,#0a0e13);border-bottom:1px solid var(--border)}
-header .logo{font-weight:800;letter-spacing:2px;color:var(--gold);white-space:nowrap}
-header .logo span{color:var(--green)}
-header .tag{font-size:10px;color:var(--muted);border:1px solid var(--border);padding:2px 8px;border-radius:20px}
-header .spacer{flex:1}
-select,input[type=text],input[type=password],input[type=url]{background:var(--card);border:1px solid var(--border);color:var(--text);padding:8px 10px;border-radius:8px;font-size:13px;outline:none}
-select:focus,input:focus{border-color:var(--accent)}
-.status-dot{width:8px;height:8px;border-radius:50%;background:var(--green);box-shadow:0 0 8px var(--green);animation:pulse 2s infinite}
-.btn{background:var(--card);border:1px solid var(--border);color:var(--text);padding:8px 14px;border-radius:8px;cursor:pointer;font-size:13px;transition:.2s;white-space:nowrap}
-.btn:hover{border-color:var(--accent);box-shadow:0 0 12px rgba(212,175,55,.25);transform:translateY(-1px)}
-.btn.primary{background:linear-gradient(135deg,var(--gold),#b8912a);color:#000;font-weight:700;border:none}
-.btn.green{background:linear-gradient(135deg,var(--green),#15803d);color:#fff;border:none}
-/* LAYOUT */
-.main{flex:1;display:flex;min-height:0}
-nav{width:62px;background:var(--bg2);border-right:1px solid var(--border);display:flex;flex-direction:column;align-items:center;padding:12px 0;gap:8px}
-nav .nav-btn{width:44px;height:44px;border-radius:12px;display:flex;align-items:center;justify-content:center;cursor:pointer;border:1px solid transparent;transition:.2s;font-size:20px;position:relative}
-nav .nav-btn:hover{background:var(--card);border-color:var(--border)}
-nav .nav-btn.active{background:var(--card);border-color:var(--accent);box-shadow:0 0 14px rgba(212,175,55,.2)}
-nav .nav-btn .badge{position:absolute;top:-3px;right:-3px;background:var(--green);color:#fff;font-size:9px;padding:1px 5px;border-radius:10px}
-.panel{flex:1;display:none;flex-direction:column;min-width:0}
-.panel.active{display:flex}
-/* CHAT */
-#chatPanel{padding:0}
-#chatScroll{flex:1;overflow-y:auto;padding:20px;display:flex;flex-direction:column;gap:14px}
-.msg{max-width:78%;padding:12px 16px;border-radius:14px;line-height:1.5;font-size:14px;animation:msgIn .3s;white-space:pre-wrap;word-wrap:break-word}
+body{background:var(--bg);color:var(--text);font-family:'Inter','Segoe UI',system-ui,-apple-system,sans-serif;overflow:hidden;font-size:14px}
+#particles{position:fixed;inset:0;z-index:0;opacity:.4}
+::-webkit-scrollbar{width:7px;height:7px}
+::-webkit-scrollbar-thumb{background:#2a2a3a;border-radius:8px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb:hover{background:var(--purple)}
+
+/* ===== BOOT ===== */
+#boot{position:fixed;inset:0;background:var(--bg);z-index:999;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:14px;transition:opacity .6s}
+#boot .logo{font-size:38px;font-weight:800;letter-spacing:8px;background:linear-gradient(135deg,var(--purple),var(--blue));-webkit-background-clip:text;background-clip:text;color:transparent;animation:pulse 1.6s infinite}
+#boot .sub{color:var(--muted);font-size:11px;letter-spacing:4px}
+#bootlog{font-family:monospace;font-size:11px;color:var(--green);min-height:120px;white-space:pre-line;text-align:left;width:340px}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.5}}
 @keyframes msgIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
-.msg.user{align-self:flex-end;background:linear-gradient(135deg,#1a2430,#141c26);border:1px solid #263442}
-.msg.bot{align-self:flex-start;background:var(--card);border:1px solid var(--border);border-left:3px solid var(--accent)}
-.msg.bot .who{font-size:10px;color:var(--gold);margin-bottom:4px;letter-spacing:1px}
-.msg.bot .who small{color:var(--muted)}
-.typing{align-self:flex-start;display:flex;gap:5px;padding:14px;background:var(--card);border-radius:14px;border:1px solid var(--border)}
-.typing i{width:7px;height:7px;border-radius:50%;background:var(--gold);animation:bounce 1.2s infinite}
-.typing i:nth-child(2){animation-delay:.15s}.typing i:nth-child(3){animation-delay:.3s}
 @keyframes bounce{0%,60%,100%{transform:translateY(0)}30%{transform:translateY(-7px)}}
-.chat-input{padding:14px 20px;border-top:1px solid var(--border);display:flex;gap:10px;background:var(--bg2)}
-.chat-input textarea{flex:1;background:var(--card);border:1px solid var(--border);color:var(--text);border-radius:10px;padding:11px 14px;font-size:14px;resize:none;outline:none;font-family:inherit;max-height:130px}
-.chat-input textarea:focus{border-color:var(--accent)}
-.icon-btn{width:44px;height:44px;border-radius:10px;border:1px solid var(--border);background:var(--card);color:var(--text);cursor:pointer;font-size:18px;transition:.2s;display:flex;align-items:center;justify-content:center}
-.icon-btn:hover{border-color:var(--accent)}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* ===== LAYOUT ===== */
+.app{position:relative;z-index:1;display:grid;grid-template-rows:auto 1fr auto;height:100vh}
+.main-row{display:grid;grid-template-columns:230px 1fr 280px;min-height:0}
+@media(max-width:1100px){.main-row{grid-template-columns:64px 1fr 0}.right-panel{display:none!important}}
+@media(max-width:760px){.main-row{grid-template-columns:64px 1fr 0}}
+
+/* ===== TOP HEADER ===== */
+header{display:flex;align-items:center;gap:16px;padding:10px 18px;background:linear-gradient(180deg,#0d0d18,#08080f);border-bottom:1px solid var(--border);height:54px}
+header .brand{display:flex;align-items:center;gap:10px;white-space:nowrap}
+header .brand .mark{width:34px;height:34px;border-radius:9px;background:linear-gradient(135deg,var(--purple),var(--blue));display:flex;align-items:center;justify-content:center;font-weight:800;font-size:16px;color:#fff;box-shadow:0 0 18px rgba(139,92,246,.4)}
+header .brand .txt{font-weight:800;font-size:16px;letter-spacing:1px}
+header .brand .txt span{color:var(--purple)}
+header .brand .badge{font-size:8px;color:var(--muted);border:1px solid var(--border2);padding:2px 7px;border-radius:20px;letter-spacing:1px;margin-left:4px}
+header .spacer{flex:1}
+header .ctrl{display:flex;align-items:center;gap:10px}
+.mode-pill{background:var(--card);border:1px solid var(--border2);color:var(--text);padding:7px 14px;border-radius:20px;font-size:12px;cursor:pointer;outline:none;display:flex;align-items:center;gap:6px}
+.mode-pill:hover{border-color:var(--purple)}
+.hdr-btn{width:36px;height:36px;border-radius:9px;border:1px solid var(--border);background:var(--card);color:var(--muted);cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center;transition:.2s}
+.hdr-btn:hover{color:var(--text);border-color:var(--purple)}
+.avatar{width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,var(--purple),var(--blue));display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px;cursor:pointer}
+.status-dot{width:8px;height:8px;border-radius:50%;background:var(--green);box-shadow:0 0 8px var(--green);animation:pulse 2s infinite}
+
+/* ===== LEFT SIDEBAR ===== */
+.left-nav{background:var(--bg2);border-right:1px solid var(--border);display:flex;flex-direction:column;overflow-y:auto}
+.nav-item{display:flex;align-items:center;gap:11px;padding:11px 16px;cursor:pointer;color:var(--muted);border-left:3px solid transparent;transition:.15s;font-size:13px;white-space:nowrap}
+.nav-item:hover{color:var(--text);background:var(--card)}
+.nav-item.active{color:var(--purple);background:linear-gradient(90deg,rgba(139,92,246,.12),transparent);border-left-color:var(--purple)}
+.nav-item .ico{font-size:17px;width:22px;text-align:center;flex-shrink:0}
+.nav-item .lbl{flex:1}
+.nav-item .ct{font-size:10px;background:var(--card3);color:var(--muted);padding:1px 7px;border-radius:10px}
+.nav-item.active .ct{background:var(--purple);color:#fff}
+.nav-sep{height:1px;background:var(--border);margin:6px 12px}
+.sys-widget{margin:auto 12px 14px;background:var(--card);border:1px solid var(--border);border-radius:12px;padding:13px}
+.sys-widget .title{font-size:10px;color:var(--muted);letter-spacing:1px;margin-bottom:8px;display:flex;align-items:center;justify-content:space-between}
+.sys-widget .title .on{color:var(--green);font-size:9px;display:flex;align-items:center;gap:4px}
+.gauge{margin-bottom:7px}
+.gauge .gl{display:flex;justify-content:space-between;font-size:10px;color:var(--muted2);margin-bottom:3px}
+.gauge .bar{height:5px;background:var(--bg);border-radius:4px;overflow:hidden}
+.gauge .fill{height:100%;border-radius:4px;transition:width .8s}
+.gauge.cpu .fill{background:var(--blue)}
+.gauge.ram .fill{background:var(--purple)}
+.gauge.disk .fill{background:var(--green)}
+
+/* ===== CENTER PANEL ===== */
+.center{display:flex;flex-direction:column;min-width:0;min-height:0;overflow:hidden}
+.panel{display:none;flex-direction:column;flex:1;min-height:0}
+.panel.active{display:flex}
+.panel-head{display:flex;align-items:center;gap:10px;padding:13px 20px;border-bottom:1px solid var(--border);background:var(--bg2)}
+.panel-head .ph-title{font-weight:700;font-size:15px;display:flex;align-items:center;gap:8px}
+.panel-head .ph-title .heart{color:var(--purple)}
+.panel-head .ph-sub{font-size:11px;color:var(--muted)}
+.online-tag{font-size:10px;color:var(--green);background:rgba(16,185,129,.12);border:1px solid rgba(16,185,129,.3);padding:3px 9px;border-radius:20px;display:flex;align-items:center;gap:5px}
+
+/* CHAT */
+#chatScroll{flex:1;overflow-y:auto;padding:22px;display:flex;flex-direction:column;gap:16px}
+.msg{max-width:80%;padding:13px 17px;border-radius:14px;line-height:1.55;font-size:14px;animation:msgIn .3s;white-space:pre-wrap;word-wrap:break-word}
+.msg.user{align-self:flex-end;background:linear-gradient(135deg,#1a1a2e,#161624);border:1px solid #2a2a3a}
+.msg.bot{align-self:flex-start;background:var(--card);border:1px solid var(--border);border-left:3px solid var(--accent)}
+.msg.bot .who{font-size:10px;color:var(--purple);margin-bottom:5px;letter-spacing:.5px;display:flex;align-items:center;gap:6px}
+.msg.bot .who small{color:var(--muted2)}
+.msg.bot code{background:#1a1a2e;padding:1px 5px;border-radius:4px;font-size:12px;color:var(--green)}
+.msg.bot pre{background:#0a0a12;border:1px solid var(--border);border-radius:8px;padding:11px;margin:8px 0;overflow-x:auto}
+.msg.bot pre code{background:none;padding:0;color:var(--text);font-size:12px}
+.msg.bot ul{margin:6px 0 6px 18px}
+.typing{align-self:flex-start;display:flex;gap:5px;padding:14px;background:var(--card);border-radius:14px;border:1px solid var(--border)}
+.typing i{width:7px;height:7px;border-radius:50%;background:var(--purple);animation:bounce 1.2s infinite}
+.typing i:nth-child(2){animation-delay:.15s}.typing i:nth-child(3){animation-delay:.3s}
+.quick-row{display:flex;gap:8px;padding:10px 20px;flex-wrap:wrap}
+.quick-row .chip{font-size:12px;padding:7px 14px;border-radius:20px;border:1px solid var(--border2);background:var(--card);cursor:pointer;color:var(--muted);transition:.2s}
+.quick-row .chip:hover{color:var(--purple);border-color:var(--purple);background:rgba(139,92,246,.08)}
+.chat-toolbar{display:flex;gap:8px;padding:0 20px 8px;flex-wrap:wrap;align-items:center}
+.tb-btn{font-size:12px;padding:6px 13px;border-radius:8px;border:1px solid var(--border2);background:var(--card);color:var(--muted);cursor:pointer;transition:.15s;display:flex;align-items:center;gap:5px}
+.tb-btn:hover{border-color:var(--purple);color:var(--text)}
+.chat-input{padding:12px 20px 14px;border-top:1px solid var(--border);display:flex;gap:10px;background:var(--bg2);align-items:flex-end}
+.chat-input textarea{flex:1;background:var(--card);border:1px solid var(--border2);color:var(--text);border-radius:12px;padding:11px 14px;font-size:14px;resize:none;outline:none;font-family:inherit;max-height:130px;line-height:1.4}
+.chat-input textarea:focus{border-color:var(--purple)}
+.icon-btn{width:42px;height:42px;border-radius:11px;border:1px solid var(--border2);background:var(--card);color:var(--text);cursor:pointer;font-size:17px;transition:.2s;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.icon-btn:hover{border-color:var(--purple)}
 .icon-btn.rec{background:var(--red);border-color:var(--red);color:#fff;animation:pulse 1s infinite}
-.chips{display:flex;gap:8px;padding:10px 20px;flex-wrap:wrap;border-top:1px solid var(--border);background:var(--bg2)}
-.chip{font-size:11px;padding:5px 12px;border-radius:20px;border:1px solid var(--border);cursor:pointer;color:var(--muted);transition:.2s}
-.chip:hover{color:var(--gold);border-color:var(--gold)}
+.btn{background:var(--card);border:1px solid var(--border2);color:var(--text);padding:9px 16px;border-radius:10px;cursor:pointer;font-size:13px;transition:.2s;white-space:nowrap;display:inline-flex;align-items:center;gap:6px}
+.btn:hover{border-color:var(--purple)}
+.btn.primary{background:linear-gradient(135deg,var(--purple),var(--purple-d));color:#fff;font-weight:600;border:none;box-shadow:0 0 16px rgba(139,92,246,.3)}
+.btn.primary:hover{box-shadow:0 0 24px rgba(139,92,246,.5);transform:translateY(-1px)}
+.btn.green{background:linear-gradient(135deg,var(--green),#059669);color:#fff;border:none}
+.btn.blue{background:linear-gradient(135deg,var(--blue),#2563eb);color:#fff;border:none}
+.btn.sm{padding:6px 12px;font-size:11px}
+.status-footer{display:flex;gap:18px;padding:7px 20px;background:var(--bg2);border-top:1px solid var(--border);font-size:11px;color:var(--muted);flex-wrap:wrap}
+.status-footer b{color:var(--text)}
+.status-footer .live{color:var(--green)}
+
 /* TERMINAL */
-#terminalPanel .term-wrap{flex:1;padding:10px;display:flex;min-height:0}
+#terminalPanel .term-wrap{flex:1;padding:12px;display:flex;min-height:0;flex-direction:column;gap:8px}
+.term-bar{display:flex;gap:8px;align-items:center;padding:0 4px}
+.term-bar .tt{font-size:11px;color:var(--muted)}
 #term{flex:1;border-radius:10px;border:1px solid var(--border);padding:8px}
+
 /* BROWSER */
-.browser-bar{display:flex;gap:8px;padding:12px;border-bottom:1px solid var(--border);background:var(--bg2)}
-.browser-bar input{flex:1}
-#webFrame{flex:1;border:none;background:#fff}
-/* PLUGINS */
-.plugins{flex:1;overflow-y:auto;padding:20px}
-.plugins h2,.settings h2{font-size:18px;margin-bottom:4px;color:var(--gold)}
-.plugins .sub,.settings .sub{color:var(--muted);font-size:12px;margin-bottom:18px}
-.plug-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:14px}
-.plug{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:16px;transition:.25s;position:relative;overflow:hidden}
-.plug:hover{transform:translateY(-3px);border-color:var(--accent);box-shadow:0 8px 24px rgba(212,175,55,.12)}
-.plug.installed{border-color:var(--green)}
-.plug .icon{font-size:26px;margin-bottom:8px}
-.plug h3{font-size:14px;margin-bottom:6px}
-.plug p{font-size:11.5px;color:var(--muted);line-height:1.5;margin-bottom:10px}
-.plug .meta{display:flex;justify-content:space-between;align-items:center}
-.plug .cat{font-size:10px;color:var(--cyan);border:1px solid #1e3a4d;background:#0d1820;padding:2px 8px;border-radius:10px}
-.plug .state{font-size:10px;color:var(--green);font-weight:600}
-.plug .actions{margin-top:12px;display:flex;gap:8px}
-.plug .actions .btn{padding:6px 12px;font-size:11px}
-.searchbar{display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap}
-.searchbar input{flex:1;min-width:200px}
-.searchbar select{width:auto}
-/* SETTINGS */
-.settings{flex:1;overflow-y:auto;padding:20px}
-.set-card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:18px;margin-bottom:14px}
-.set-card h3{font-size:14px;color:var(--gold);margin-bottom:12px;display:flex;align-items:center;gap:8px}
-.field{display:flex;flex-direction:column;gap:5px;margin-bottom:12px}
+.browser-bar{display:flex;gap:8px;padding:12px 16px;border-bottom:1px solid var(--border);background:var(--bg2);align-items:center}
+.browser-bar input{flex:1;background:var(--card);border:1px solid var(--border2);color:var(--text);padding:8px 12px;border-radius:8px;font-size:13px;outline:none}
+.browser-bar input:focus{border-color:var(--purple)}
+#webFrame{flex:1;border:none;background:#fff;min-height:0}
+
+/* GENERIC PANELS */
+.pscroll{flex:1;overflow-y:auto;padding:22px}
+.pscroll h2{font-size:18px;margin-bottom:4px;color:var(--text)}
+.pscroll .psub{color:var(--muted);font-size:12px;margin-bottom:20px}
+.card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:18px;margin-bottom:14px}
+.card h3{font-size:14px;color:var(--purple);margin-bottom:12px;display:flex;align-items:center;gap:8px}
+.field{display:flex;flex-direction:column;gap:5px;margin-bottom:13px}
 .field label{font-size:11px;color:var(--muted)}
-.field input,.field textarea{width:100%}
-.field textarea{background:var(--card);border:1px solid var(--border);color:var(--text);border-radius:8px;padding:8px 10px;font-size:12px;min-height:60px;font-family:monospace;outline:none}
-.hint{font-size:10.5px;color:var(--muted);margin-top:4px;line-height:1.4}
+.field input,.field textarea,.field select{width:100%;background:var(--card2);border:1px solid var(--border2);color:var(--text);padding:9px 11px;border-radius:8px;font-size:13px;outline:none;font-family:inherit}
+.field input:focus,.field textarea:focus,.field select:focus{border-color:var(--purple)}
+.field textarea{min-height:64px;font-family:monospace;font-size:12px}
+.hint{font-size:10.5px;color:var(--muted2);margin-top:4px;line-height:1.5}
 .row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
 .ok-msg{color:var(--green);font-size:12px}
 .err-msg{color:var(--red);font-size:12px}
-/* STATUS BAR */
-.statusbar{display:flex;gap:16px;padding:6px 16px;background:var(--bg2);border-top:1px solid var(--border);font-size:11px;color:var(--muted);flex-wrap:wrap}
-.statusbar b{color:var(--text)}
-.statusbar .live{color:var(--green)}
-::-webkit-scrollbar{width:8px;height:8px}
-::-webkit-scrollbar-thumb{background:#223041;border-radius:8px}
-::-webkit-scrollbar-track{background:transparent}
-@media(max-width:760px){nav{width:52px}.msg{max-width:92%}}
+
+/* PLUGINS */
+.plug-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:14px}
+.plug{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:16px;transition:.25s;position:relative;overflow:hidden}
+.plug:hover{transform:translateY(-3px);border-color:var(--purple);box-shadow:0 8px 24px rgba(139,92,246,.12)}
+.plug.installed{border-color:var(--green)}
+.plug .icon{font-size:26px;margin-bottom:8px}
+.plug h3{font-size:14px;margin-bottom:6px;color:var(--text)}
+.plug p{font-size:11.5px;color:var(--muted);line-height:1.5;margin-bottom:10px}
+.plug .meta{display:flex;justify-content:space-between;align-items:center}
+.plug .cat{font-size:10px;color:var(--blue);border:1px solid #1e3a5f;background:#0d1825;padding:2px 8px;border-radius:10px}
+.plug .state{font-size:10px;color:var(--green);font-weight:600}
+.plug .actions{margin-top:12px;display:flex;gap:8px}
+.searchbar{display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap}
+.searchbar input{flex:1;min-width:180px;background:var(--card2);border:1px solid var(--border2);color:var(--text);padding:9px 12px;border-radius:8px;font-size:13px;outline:none}
+.searchbar select{width:auto;background:var(--card2);border:1px solid var(--border2);color:var(--text);padding:9px;border-radius:8px;font-size:13px}
+
+/* RIGHT PANEL */
+.right-panel{background:var(--bg2);border-left:1px solid var(--border);overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:16px}
+.rp-card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:14px}
+.rp-card .rp-title{font-size:11px;color:var(--muted);letter-spacing:1px;margin-bottom:11px;text-transform:uppercase;display:flex;align-items:center;justify-content:space-between}
+.rp-card .rp-title .ct{font-size:9px;background:var(--card3);padding:1px 6px;border-radius:8px;color:var(--muted2)}
+.agent-row{display:flex;align-items:center;gap:9px;padding:7px 0;font-size:12px;border-bottom:1px solid var(--border)}
+.agent-row:last-child{border:none}
+.agent-row .ai{width:28px;height:28px;border-radius:8px;background:var(--card3);display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0}
+.agent-row .an{flex:1;color:var(--text)}
+.agent-row .as{font-size:10px}
+.agent-row .as.on{color:var(--green)}
+.agent-row .as.wait{color:var(--muted2)}
+.model-row{display:flex;align-items:center;gap:9px;padding:8px 0;font-size:12px;border-bottom:1px solid var(--border);cursor:pointer}
+.model-row:last-child{border:none}
+.model-row:hover{color:var(--purple)}
+.model-row .rb{width:15px;height:15px;border-radius:50%;border:2px solid var(--border2);flex-shrink:0;position:relative;transition:.15s}
+.model-row.sel .rb{border-color:var(--purple)}
+.model-row.sel .rb::after{content:'';position:absolute;inset:2px;border-radius:50%;background:var(--purple)}
+.model-row .mn{flex:1;color:var(--text)}
+.model-row.sel .mn{color:var(--purple);font-weight:600}
+.model-row .mt{font-size:9px;padding:1px 6px;border-radius:8px}
+.model-row .mt.free{background:rgba(16,185,129,.15);color:var(--green)}
+.model-row .mt.paid{background:rgba(156,163,175,.15);color:var(--muted)}
+.model-row .mt.local{background:rgba(59,130,246,.15);color:var(--blue)}
+.tool-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.tool-cell{background:var(--card3);border:1px solid var(--border);border-radius:9px;padding:11px 6px;text-align:center;cursor:pointer;transition:.15s;font-size:10px;color:var(--muted)}
+.tool-cell:hover{border-color:var(--purple);color:var(--text);background:rgba(139,92,246,.08)}
+.tool-cell .ti{font-size:18px;margin-bottom:4px}
+.plugin-row{display:flex;align-items:center;gap:9px;padding:7px 0;font-size:12px;border-bottom:1px solid var(--border)}
+.plugin-row:last-child{border:none}
+.plugin-row .pi{font-size:14px}
+.plugin-row .pn{flex:1;color:var(--text)}
+.plugin-row .pdot{width:7px;height:7px;border-radius:50%;background:var(--green);box-shadow:0 0 6px var(--green)}
+
+/* BOTTOM BAR */
+.bottombar{display:flex;align-items:center;gap:12px;padding:10px 18px;background:linear-gradient(180deg,#0a0a12,#08080f);border-top:1px solid var(--border);min-height:56px}
+.bottombar .bb-input{flex:1;display:flex;align-items:center;gap:8px;background:var(--card);border:1px solid var(--border2);border-radius:12px;padding:8px 14px}
+.bottombar .bb-input:focus-within{border-color:var(--purple)}
+.bottombar .bb-input input{flex:1;background:none;border:none;color:var(--text);font-size:13px;outline:none}
+.bottombar .bb-input input::placeholder{color:var(--muted2)}
+.bb-ctrls{display:flex;gap:6px}
+.bb-ctrl{font-size:11px;padding:6px 11px;border-radius:8px;border:1px solid var(--border2);background:var(--card);color:var(--muted);cursor:pointer;transition:.15s;display:flex;align-items:center;gap:5px}
+.bb-ctrl:hover{color:var(--text);border-color:var(--purple)}
+.adv-toggle{display:flex;align-items:center;gap:8px;font-size:11px;color:var(--muted);cursor:pointer;white-space:nowrap}
+.switch{width:38px;height:21px;border-radius:20px;background:var(--card3);border:1px solid var(--border2);position:relative;transition:.2s;flex-shrink:0}
+.switch::after{content:'';position:absolute;top:2px;left:2px;width:15px;height:15px;border-radius:50%;background:var(--muted2);transition:.2s}
+.adv-toggle.on .switch{background:linear-gradient(135deg,var(--purple),var(--purple-d));border-color:var(--purple)}
+.adv-toggle.on .switch::after{left:19px;background:#fff}
+
+/* ADMIN */
+.stat-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:12px}
+.stat-box{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:15px}
+.stat-box .sv{font-size:24px;font-weight:700;color:var(--purple)}
+.stat-box .sl{font-size:11px;color:var(--muted);margin-top:3px}
+.audit-list{max-height:340px;overflow-y:auto}
+.audit-row{display:flex;gap:10px;padding:7px 0;border-bottom:1px solid var(--border);font-size:11px;font-family:monospace}
+.audit-row .at{color:var(--muted2);width:130px;flex-shrink:0}
+.audit-row .aa{color:var(--blue);width:90px;flex-shrink:0}
+.audit-row .ad{color:var(--text);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+table.tbl{width:100%;border-collapse:collapse;font-size:12px}
+table.tbl th{text-align:left;color:var(--muted);font-size:11px;padding:8px 10px;border-bottom:1px solid var(--border);font-weight:600}
+table.tbl td{padding:8px 10px;border-bottom:1px solid var(--border);color:var(--text)}
+table.tbl tr:hover td{background:var(--card2)}
+.tag{font-size:9px;padding:2px 7px;border-radius:8px;display:inline-block}
+.tag.free{background:rgba(16,185,129,.15);color:var(--green)}
+.tag.paid{background:rgba(156,163,175,.15);color:var(--muted)}
+.tag.local{background:rgba(59,130,246,.15);color:var(--blue)}
+.tag.ok{background:rgba(16,185,129,.15);color:var(--green)}
+.tag.no{background:rgba(239,68,68,.15);color:var(--red)}
+
+/* FILE EXPLORER */
+.file-bar{display:flex;gap:8px;padding:12px 16px;border-bottom:1px solid var(--border);background:var(--bg2);align-items:center}
+.file-list{flex:1;overflow-y:auto;padding:8px 16px}
+.file-row{display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:8px;cursor:pointer;font-size:13px;transition:.1s}
+.file-row:hover{background:var(--card)}
+.file-row .fi{font-size:16px}
+.file-row .fn{flex:1}
+.file-row .fs{font-size:11px;color:var(--muted2)}
+.file-row .fa{display:flex;gap:6px}
+.code-view{flex:1;display:flex;flex-direction:column;min-height:0}
+.code-view textarea{flex:1;background:#0a0a12;border:1px solid var(--border);color:var(--text);border-radius:8px;padding:12px;font-family:monospace;font-size:12px;resize:none;outline:none;line-height:1.5}
+
+/* AGENT CARDS */
+.agent-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:14px}
+.agent-card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:16px;transition:.2s;cursor:pointer}
+.agent-card:hover{border-color:var(--purple);transform:translateY(-2px)}
+.agent-card .ah{display:flex;align-items:center;gap:10px;margin-bottom:8px}
+.agent-card .ai2{width:38px;height:38px;border-radius:10px;background:var(--card3);display:flex;align-items:center;justify-content:center;font-size:20px}
+.agent-card .an2{font-weight:600;font-size:14px}
+.agent-card .ad2{font-size:11px;color:var(--muted);line-height:1.5;margin-bottom:10px}
+.agent-card .ar{font-size:10px;color:var(--green)}
 </style>
 </head>
 <body>
 <div id="particles"></div>
 <div id="boot">
   <div class="logo">NEXUS</div>
-  <div class="sub">SUPER AGENT v1.0</div>
+  <div class="sub">SUPER AGENT v2.0</div>
   <div id="bootlog"></div>
 </div>
 
 <div class="app">
+  <!-- TOP HEADER -->
   <header>
-    <div class="logo">NEX<span>US</span> <small style="font-size:10px;color:var(--muted)">SUPER AGENT</small></div>
-    <span class="tag" id="engineTag">demo local</span>
+    <div class="brand">
+      <div class="mark">N</div>
+      <div class="txt">NEX<span>US</span> AI <span class="badge">SUPER AGENT</span></div>
+    </div>
     <div class="spacer"></div>
-    <span class="status-dot" title="online"></span>
-    <select id="modelSel" title="Modelo de IA">
-      <option value="demo">🧪 Modo Demo (sem chave)</option>
-      <option value="openrouter">🔀 OpenRouter (modelos free)</option>
-      <option value="nvidia">🟩 NVIDIA NIM</option>
-      <option value="minimax">🟥 MiniMax</option>
-      <option value="gemini">🔵 Google Gemini</option>
-      <option value="custom">⚙️ OpenAI-compatível (URL própria)</option>
-    </select>
-    <input type="text" id="modelId" placeholder="id do modelo" style="width:180px" title="ID do modelo (ex.: google/gemini-2.0-flash-exp:free)">
-    <button class="btn" onclick="go('settings')">🔑 Chaves</button>
+    <div class="ctrl">
+      <select class="mode-pill" id="modelSel" title="Modelo / Modo">
+        <option value="demo">🧪 Modo Demo (sem chave)</option>
+        <option value="openrouter">🔀 OpenRouter (free)</option>
+        <option value="nvidia">🟩 NVIDIA NIM</option>
+        <option value="groq">⚡ Groq</option>
+        <option value="gemini">🔵 Google Gemini</option>
+        <option value="minimax">🟥 MiniMax</option>
+        <option value="custom">⚙️ OpenAI-compatível</option>
+      </select>
+      <input type="text" id="modelId" placeholder="id do modelo" style="width:170px;background:var(--card);border:1px solid var(--border2);color:var(--text);padding:7px 10px;border-radius:8px;font-size:12px;outline:none" title="ID do modelo">
+      <button class="hdr-btn" onclick="go('settings')" title="Notificações">🔔</button>
+      <button class="hdr-btn" id="themeBtn" onclick="toggleTheme()" title="Tema">☀️</button>
+      <div class="avatar" onclick="go('settings')" title="Conta">NX</div>
+    </div>
   </header>
 
-  <div class="main">
-    <nav>
-      <div class="nav-btn active" onclick="go('chat')" title="Chat" id="nb-chat">💬</div>
-      <div class="nav-btn" onclick="go('terminal')" title="Terminal" id="nb-terminal">⌨️</div>
-      <div class="nav-btn" onclick="go('browser')" title="Navegador ao vivo" id="nb-browser">🌐</div>
-      <div class="nav-btn" onclick="go('plugins')" title="Marketplace de plugins" id="nb-plugins">🧩<span class="badge" id="plugBadge">0</span></div>
-      <div class="nav-btn" onclick="go('settings')" title="Configurações e integrações" id="nb-settings">⚙️</div>
+  <div class="main-row">
+    <!-- LEFT NAV -->
+    <nav class="left-nav" id="leftNav">
+      <div class="nav-item active" onclick="go('chat')" id="nb-chat"><span class="ico">💬</span><span class="lbl">Chat</span></div>
+      <div class="nav-item" onclick="go('agentes')" id="nb-agentes"><span class="ico">🤖</span><span class="lbl">Agentes</span></div>
+      <div class="nav-item" onclick="go('modelos')" id="nb-modelos"><span class="ico">🧠</span><span class="lbl">Modelos</span></div>
+      <div class="nav-item" onclick="go('ferramentas')" id="nb-ferramentas"><span class="ico">🛠️</span><span class="lbl">Ferramentas</span></div>
+      <div class="nav-item" onclick="go('projetos')" id="nb-projetos"><span class="ico">📁</span><span class="lbl">Projetos</span></div>
+      <div class="nav-item" onclick="go('plugins')" id="nb-plugins"><span class="ico">🧩</span><span class="lbl">Marketplace</span><span class="ct" id="plugBadge">0</span></div>
+      <div class="nav-item" onclick="go('memoria')" id="nb-memoria"><span class="ico">🧬</span><span class="lbl">Memória</span></div>
+      <div class="nav-item" onclick="go('arquivos')" id="nb-arquivos"><span class="ico">📂</span><span class="lbl">Arquivos</span></div>
+      <div class="nav-item" onclick="go('github')" id="nb-github"><span class="ico">🐙</span><span class="lbl">GitHub</span></div>
+      <div class="nav-item" onclick="go('terminal')" id="nb-terminal"><span class="ico">⌨️</span><span class="lbl">Terminal</span></div>
+      <div class="nav-item" onclick="go('browser')" id="nb-browser"><span class="ico">🌐</span><span class="lbl">Navegador</span></div>
+      <div class="nav-sep"></div>
+      <div class="nav-item" onclick="go('admin')" id="nb-admin"><span class="ico">🛡️</span><span class="lbl">Administração</span></div>
+      <div class="nav-item" onclick="go('settings')" id="nb-settings"><span class="ico">⚙️</span><span class="lbl">Configurações</span></div>
+
+      <div class="sys-widget">
+        <div class="title">Status do Sistema <span class="on"><span class="status-dot" style="display:inline-block"></span>Online</span></div>
+        <div class="gauge cpu"><div class="gl"><span>CPU</span><span id="gCpu">12%</span></div><div class="bar"><div class="fill" id="gCpuF" style="width:12%"></div></div></div>
+        <div class="gauge ram"><div class="gl"><span>RAM</span><span id="gRam">34%</span></div><div class="bar"><div class="fill" id="gRamF" style="width:34%"></div></div></div>
+        <div class="gauge disk"><div class="gl"><span>Armazenamento</span><span id="gDisk">28%</span></div><div class="bar"><div class="fill" id="gDiskF" style="width:28%"></div></div></div>
+      </div>
     </nav>
 
-    <!-- CHAT -->
-    <div class="panel active" id="chatPanel">
-      <div id="chatScroll"></div>
-      <div class="chips" id="chips"></div>
-      <div class="chat-input">
-        <button class="icon-btn" id="micBtn" onclick="toggleMic()" title="Falar (reconhecimento de voz)">🎤</button>
-        <textarea id="chatText" rows="1" placeholder="Fale ou digite... o agente responde com voz se ligar o alto-falante"></textarea>
-        <button class="icon-btn" id="ttsBtn" onclick="toggleTTS()" title="Alto-falante do agente (voz)">🔈</button>
-        <button class="btn primary" onclick="sendMsg()">Enviar ▸</button>
+    <!-- CENTER -->
+    <div class="center">
+      <!-- CHAT -->
+      <div class="panel active" id="chatPanel">
+        <div class="panel-head">
+          <div class="ph-title">NEXUS <span class="heart">💜</span> <span class="ph-sub">Agente Principal</span></div>
+          <span class="online-tag"><span class="status-dot" style="display:inline-block"></span>Online</span>
+        </div>
+        <div id="chatScroll"></div>
+        <div class="quick-row" id="chips"></div>
+        <div class="chat-toolbar">
+          <button class="tb-btn" onclick="go('ferramentas')">🛠️ Ferramentas</button>
+          <button class="tb-btn" onclick="go('agentes')">🤖 Agentes</button>
+          <button class="tb-btn" onclick="document.getElementById('fileInput').click()">📎 Anexar</button>
+          <input type="file" id="fileInput" style="display:none" onchange="handleFile(event)">
+        </div>
+        <div class="chat-input">
+          <button class="icon-btn" id="micBtn" onclick="toggleMic()" title="Falar (voz)">🎤</button>
+          <textarea id="chatText" rows="1" placeholder="Digite sua mensagem..."></textarea>
+          <button class="icon-btn" id="ttsBtn" onclick="toggleTTS()" title="Alto-falante do agente">🔈</button>
+          <button class="btn primary" onclick="sendMsg()">Enviar ▸</button>
+        </div>
+        <div class="status-footer">
+          <span>Modelo: <b id="sbModel">demo</b></span>
+          <span>Plugins: <b id="sbPlug">0</b></span>
+          <span>Python: <b id="sbPy">aguardando</b></span>
+          <span>Sandbox: <b class="live">isolado ✓</b></span>
+          <span style="margin-left:auto"><b id="sbClock">--:--</b> <span id="sbDate"></span></span>
+        </div>
       </div>
-    </div>
 
-    <!-- TERMINAL -->
-    <div class="panel" id="terminalPanel">
-      <div class="term-wrap"><div id="term"></div></div>
-    </div>
-
-    <!-- BROWSER -->
-    <div class="panel" id="browserPanel">
-      <div class="browser-bar">
-        <input type="text" id="urlBar" placeholder="https://exemplo.com ou cole HTML:" value="https://pt.wikipedia.org/wiki/Intelig%C3%AAncia_artificial">
-        <button class="btn green" onclick="navBrowser()">Ir ▸</button>
-        <button class="btn" onclick="previewHTML()" title="Visualizar o HTML digitado na barra">▶ Preview HTML</button>
-        <button class="btn" onclick="openInNewTab()">↗ Nova aba</button>
+      <!-- AGENTES -->
+      <div class="panel" id="agentesPanel">
+        <div class="panel-head"><div class="ph-title">🤖 Agentes <span class="ph-sub">Orquestrador multiagente</span></div>
+          <button class="btn sm primary" onclick="runAutoAgent()">▶ Executar tarefa (auto)</button>
+        </div>
+        <div class="pscroll">
+          <div class="psub">15 agentes especializados. O orquestrador escolhe o melhor para cada tarefa. Use <code style="background:var(--card3);padding:2px 6px;border-radius:5px;color:var(--green)">/agent &lt;tarefa&gt;</code> no chat (requer backend conectado).</div>
+          <div class="agent-grid" id="agentGrid"></div>
+        </div>
       </div>
-      <iframe id="webFrame" src="https://pt.wikipedia.org/wiki/Intelig%C3%AAncia_artificial" sandbox="allow-scripts allow-same-origin allow-forms"></iframe>
-    </div>
 
-    <!-- PLUGINS -->
-    <div class="panel" id="pluginsPanel">
-      <div class="plugins">
-        <h2>🧩 Marketplace de Plugins</h2>
-        <div class="sub">Ecosistema estilo Acode: instale, ative e combine extensões. Tudo fica salvo no seu navegador.</div>
-        <div class="searchbar">
-          <input type="text" id="plugSearch" placeholder="Buscar plugin..." oninput="renderPlugins()">
-          <select id="plugCat" onchange="renderPlugins()">
-            <option value="">Todas as categorias</option>
-            <option>Integração</option><option>Automação</option><option>Dev</option><option>Voz e Mídia</option><option>Visual</option><option>Produtividade</option>
-          </select>
+      <!-- MODELOS -->
+      <div class="panel" id="modelosPanel">
+        <div class="panel-head"><div class="ph-title">🧠 Modelos <span class="ph-sub">Catálogo de provedores</span></div></div>
+        <div class="pscroll">
+          <div class="psub">14 provedores OpenAI-compatíveis + Gemini + Anthropic + Ollama local. Configure chaves em ⚙️.</div>
+          <div id="modelCatalog"></div>
         </div>
-        <div class="plug-grid" id="plugGrid"></div>
       </div>
-    </div>
 
-    <!-- SETTINGS -->
-    <div class="panel" id="settingsPanel">
-      <div class="settings">
-        <h2>⚙️ Configurações e Integrações</h2>
-        <div class="sub">Chaves ficam só no seu navegador (localStorage). Nada é enviado a terceiros sem sua ação.</div>
-
-        <div class="set-card">
-          <h3>🧠 Modelos de IA (gratuitos)</h3>
-          <div class="field"><label>OpenRouter API Key (tem modelos :free)</label><input type="password" id="k_openrouter" placeholder="sk-or-v1-..."></div>
-          <div class="field"><label>NVIDIA NIM API Key (build.nvidia.com)</label><input type="password" id="k_nvidia" placeholder="nvapi-..."></div>
-          <div class="field"><label>MiniMax API Key</label><input type="password" id="k_minimax" placeholder="eyJ..."></div>
-          <div class="field"><label>Google Gemini API Key (aistudio.google.com)</label><input type="password" id="k_gemini" placeholder="AIza..."></div>
-          <div class="field"><label>Servidor OpenAI-compatível (URL base)</label><input type="url" id="k_custom" placeholder="https://api.seuservidor.com/v1"></div>
-          <div class="field"><label>Chave do servidor custom (opcional)</label><input type="password" id="k_custom_key" placeholder="Bearer token"></div>
-          <div class="row"><button class="btn primary" onclick="saveKeys()">💾 Salvar chaves</button><span id="keysMsg"></span></div>
-          <div class="hint">Modelos sugeridos: google/gemini-2.0-flash-exp:free, meta-llama/llama-3.1-8b-instruct:free, mistralai/mistral-7b-instruct:free (OpenRouter), llama-3.1-nemotron-70b (NVIDIA), gemini-2.0-flash (Gemini), abab6.5s-chat (MiniMax).</div>
+      <!-- FERRAMENTAS -->
+      <div class="panel" id="ferramentasPanel">
+        <div class="panel-head"><div class="ph-title">🛠️ Ferramentas <span class="ph-sub">Execução e sandbox</span></div></div>
+        <div class="pscroll">
+          <div class="psub">Ferramentas open source integradas: terminal real, Python (Pyodide), navegador ao vivo, arquivos, GitHub e busca web.</div>
+          <div class="tool-grid" style="grid-template-columns:repeat(auto-fill,minmax(140px,1fr))">
+            <div class="tool-cell" onclick="go('terminal')"><div class="ti">⌨️</div>Terminal</div>
+            <div class="tool-cell" onclick="runPyTool()"><div class="ti">🐍</div>Python</div>
+            <div class="tool-cell" onclick="go('browser')"><div class="ti">🌐</div>Navegador</div>
+            <div class="tool-cell" onclick="go('arquivos')"><div class="ti">📂</div>Arquivos</div>
+            <div class="tool-cell" onclick="go('github')"><div class="ti">🐙</div>GitHub</div>
+            <div class="tool-cell" onclick="webSearch()"><div class="ti">🔍</div>Web Search</div>
+          </div>
+          <div class="card" style="margin-top:16px">
+            <h3>🐍 Python Sandbox (Pyodide)</h3>
+            <div class="field"><textarea id="pyCode" rows="4" placeholder="import math&#10;print(math.factorial(20))">import math
+print(math.factorial(20))
+print(sum(range(101)))</textarea></div>
+            <button class="btn primary" onclick="runPyBox()">▶ Executar Python</button>
+            <pre id="pyOut" style="margin-top:12px;background:#0a0a12;border:1px solid var(--border);border-radius:8px;padding:11px;font-size:12px;overflow-x:auto;white-space:pre-wrap;min-height:40px;color:var(--green)"></pre>
+          </div>
+          <div class="card">
+            <h3>⚡ JavaScript Sandbox</h3>
+            <div class="field"><textarea id="jsCode" rows="3" placeholder="console.log('olá')">[1,2,3,4,5].reduce((a,b)=>a+b,0)</textarea></div>
+            <button class="btn primary" onclick="runJsBox()">▶ Executar JS</button>
+            <pre id="jsOut" style="margin-top:12px;background:#0a0a12;border:1px solid var(--border);border-radius:8px;padding:11px;font-size:12px;overflow-x:auto;white-space:pre-wrap;min-height:40px;color:var(--green)"></pre>
+          </div>
         </div>
+      </div>
 
-        <div class="set-card">
-          <h3>💬 WhatsApp Bridge</h3>
-          <div class="field"><label>Webhook do bridge (Base44, n8n ou seu servidor)</label><input type="url" id="k_wa_webhook" placeholder="https://.../webhook"></div>
-          <div class="field"><label>Token secreto do bridge</label><input type="password" id="k_wa_token" placeholder="token"></div>
-          <div class="row"><button class="btn green" onclick="testWA()">📡 Testar conexão</button><span id="waMsg"></span></div>
-          <div class="hint">O agente envia e recebe mensagens pelo webhook. Com o Base44 Superagent você cria o bridge real; com o n8n você conecta a API oficial do WhatsApp Business. O plugin "WhatsApp Bridge" do marketplace usa esta configuração.</div>
+      <!-- PROJETOS -->
+      <div class="panel" id="projetosPanel">
+        <div class="panel-head"><div class="ph-title">📁 Projetos <span class="ph-sub">Workspace</span></div>
+          <button class="btn sm green" onclick="newProject()">+ Novo projeto</button>
         </div>
-
-        <div class="set-card">
-          <h3>🔄 Automação (n8n) e Dados (Supabase / Firebase)</h3>
-          <div class="field"><label>Webhook n8n para ações do agente</label><input type="url" id="k_n8n" placeholder="https://seu-n8n.com/webhook/nexus"></div>
-          <div class="field"><label>Supabase URL</label><input type="url" id="k_supabase" placeholder="https://xyz.supabase.co"></div>
-          <div class="field"><label>Supabase anon key</label><input type="password" id="k_supabase_key" placeholder="eyJ..."></div>
-          <div class="field"><label>Firebase config (JSON)</label><textarea id="k_firebase" placeholder='{"apiKey":"...","projectId":"...","appId":"..."}'></textarea></div>
-          <div class="row"><button class="btn primary" onclick="saveKeys()">💾 Salvar integrações</button><button class="btn" onclick="testN8N()">🔄 Testar n8n</button><span id="n8nMsg"></span></div>
-          <div class="hint">n8n: cada comando /n8n no chat dispara o fluxo. Supabase: o plugin "Memória Supabase" salva o histórico da conversa. Firebase: sincronização multi-dispositivo (roadmap do app).</div>
+        <div class="pscroll">
+          <div class="psub">Projetos salvos no seu navegador. Cada projeto tem arquivos e notas.</div>
+          <div id="projList"></div>
         </div>
+      </div>
 
-        <div class="set-card">
-          <h3>🎨 Aparência</h3>
-          <div class="row">
-            <button class="btn" onclick="setAccent('var(--gold)')">Dourado</button>
-            <button class="btn" onclick="setAccent('var(--green)')">Verde</button>
-            <button class="btn" onclick="setAccent('var(--cyan)')">Ciano</button>
-            <span class="hint">Estilo NEXUS: preto, dourado e verde. Animado, mas leve.</span>
+      <!-- PLUGINS / MARKETPLACE -->
+      <div class="panel" id="pluginsPanel">
+        <div class="panel-head"><div class="ph-title">🧩 Marketplace <span class="ph-sub">Extensões open source</span></div></div>
+        <div class="pscroll">
+          <div class="searchbar">
+            <input type="text" id="plugSearch" placeholder="Buscar plugin..." oninput="renderPlugins()">
+            <select id="plugCat" onchange="renderPlugins()">
+              <option value="">Todas as categorias</option>
+              <option>Integração</option><option>Automação</option><option>Dev</option><option>Voz e Mídia</option><option>Visual</option><option>Produtividade</option>
+            </select>
+          </div>
+          <div class="plug-grid" id="plugGrid"></div>
+        </div>
+      </div>
+
+      <!-- MEMÓRIA -->
+      <div class="panel" id="memoriaPanel">
+        <div class="panel-head"><div class="ph-title">🧬 Memória <span class="ph-sub">Histórico e contexto</span></div>
+          <button class="btn sm" onclick="clearMemory()">🗑️ Limpar</button>
+        </div>
+        <div class="pscroll">
+          <div class="psub">Histórico da conversa salvo localmente. Configure Supabase em ⚙️ para memória persistente entre dispositivos.</div>
+          <div id="memList"></div>
+        </div>
+      </div>
+
+      <!-- ARQUIVOS -->
+      <div class="panel" id="arquivosPanel">
+        <div class="panel-head"><div class="ph-title">📂 Arquivos <span class="ph-sub">VFS do workspace</span></div>
+          <button class="btn sm green" onclick="newFile()">+ Novo</button>
+        </div>
+        <div class="file-bar">
+          <input type="text" id="filePath" placeholder="caminho/arquivo.txt" style="flex:1;background:var(--card);border:1px solid var(--border2);color:var(--text);padding:8px;border-radius:8px;font-size:12px;outline:none">
+          <button class="btn sm" onclick="loadFile()">Abrir</button>
+          <button class="btn sm primary" onclick="saveFile()">💾 Salvar</button>
+          <button class="btn sm" onclick="refreshFiles()">🔄</button>
+        </div>
+        <div style="display:flex;flex:1;min-height:0">
+          <div class="file-list" id="fileList" style="width:240px;border-right:1px solid var(--border)"></div>
+          <div style="flex:1;display:flex;flex-direction:column;min-width:0;padding:12px">
+            <textarea id="fileContent" class="code-view" placeholder="Conteúdo do arquivo..."></textarea>
+          </div>
+        </div>
+      </div>
+
+      <!-- GITHUB -->
+      <div class="panel" id="githubPanel">
+        <div class="panel-head"><div class="ph-title">🐙 GitHub <span class="ph-sub">Integração via backend</span></div></div>
+        <div class="pscroll">
+          <div class="psub">Proxy autenticado para a API do GitHub. Configure <code style="background:var(--card3);padding:2px 6px;border-radius:5px;color:var(--green)">key_github</code> no cofre do backend.</div>
+          <div class="card">
+            <h3>🔧 Configurar token</h3>
+            <div class="field"><label>GitHub Personal Token (salvo no cofre do backend)</label><input type="password" id="ghToken" placeholder="ghp_..."></div>
+            <button class="btn primary" onclick="saveGithubToken()">💾 Salvar token no cofre</button>
+            <span id="ghMsg" style="margin-left:10px"></span>
+          </div>
+          <div class="card">
+            <h3>🔎 Requisição à API</h3>
+            <div class="field"><label>Caminho (ex.: /user, /repos/owner/repo)</label><input type="text" id="ghPath" placeholder="/user"></div>
+            <div class="row">
+              <select id="ghMethod" style="background:var(--card2);border:1px solid var(--border2);color:var(--text);padding:8px;border-radius:8px;font-size:12px">
+                <option>GET</option><option>POST</option><option>PATCH</option><option>PUT</option>
+              </select>
+              <button class="btn primary" onclick="ghRequest()">▶ Executar</button>
+            </div>
+            <pre id="ghResult" style="margin-top:12px;background:#0a0a12;border:1px solid var(--border);border-radius:8px;padding:11px;font-size:11px;overflow:auto;max-height:300px;white-space:pre-wrap;color:var(--text)"></pre>
+          </div>
+        </div>
+      </div>
+
+      <!-- TERMINAL -->
+      <div class="panel" id="terminalPanel">
+        <div class="panel-head"><div class="ph-title">⌨️ Terminal <span class="ph-sub">Sandbox isolado</span></div>
+          <span class="online-tag" id="termMode"><span class="status-dot" style="display:inline-block"></span>local</span>
+        </div>
+        <div class="term-wrap">
+          <div class="term-bar"><span class="tt">digite <b style="color:var(--green)">help</b> para comandos · backend conectado = comandos reais</span></div>
+          <div id="term"></div>
+        </div>
+      </div>
+
+      <!-- BROWSER -->
+      <div class="panel" id="browserPanel">
+        <div class="panel-head"><div class="ph-title">🌐 Navegador <span class="ph-sub">Preview ao vivo</span></div></div>
+        <div class="browser-bar">
+          <input type="text" id="urlBar" placeholder="https://exemplo.com ou cole HTML:" value="https://pt.wikipedia.org/wiki/Intelig%C3%AAncia_artificial">
+          <button class="btn green" onclick="navBrowser()">Ir ▸</button>
+          <button class="btn" onclick="previewHTML()">▶ Preview HTML</button>
+          <button class="btn" onclick="openInNewTab()">↗ Nova aba</button>
+        </div>
+        <iframe id="webFrame" src="https://pt.wikipedia.org/wiki/Intelig%C3%AAncia_artificial" sandbox="allow-scripts allow-same-origin allow-forms"></iframe>
+      </div>
+
+      <!-- ADMIN -->
+      <div class="panel" id="adminPanel">
+        <div class="panel-head"><div class="ph-title">🛡️ Administração <span class="ph-sub">Painel administrativo</span></div>
+          <button class="btn sm" onclick="loadAdmin()">🔄 Atualizar</button>
+        </div>
+        <div class="pscroll">
+          <div class="psub">Painel administrativo do backend NEXUS AI. Status do servidor, provedores, cofre, auditoria e terminal de testes.</div>
+          <div class="stat-grid" id="adminStats"></div>
+          <div class="card">
+            <h3>🔑 Cofre de chaves (AES-256-GCM)</h3>
+            <div class="row" style="margin-bottom:12px">
+              <input type="text" id="vaultKeyId" placeholder="id da chave (ex.: key_openrouter)" style="flex:1;background:var(--card2);border:1px solid var(--border2);color:var(--text);padding:8px;border-radius:8px;font-size:12px;outline:none">
+              <input type="password" id="vaultKeyVal" placeholder="valor da chave" style="flex:1;background:var(--card2);border:1px solid var(--border2);color:var(--text);padding:8px;border-radius:8px;font-size:12px;outline:none">
+              <button class="btn primary sm" onclick="vaultAdd()">+ Adicionar</button>
+              <button class="btn sm" onclick="vaultList()">Listar</button>
+            </div>
+            <div id="vaultList" style="font-size:12px"></div>
+          </div>
+          <div class="card">
+            <h3>📋 Auditoria (últimas operações)</h3>
+            <div class="audit-list" id="auditList"><div class="hint">conecte o backend e clique em Atualizar</div></div>
+          </div>
+          <div class="card">
+            <h3>🧪 Teste de API (terminal admin)</h3>
+            <div class="field"><label>Comando / endpoint</label>
+              <div class="row">
+                <select id="apiTestSel" onchange="document.getElementById('apiTestCmd').value=this.value" style="background:var(--card2);border:1px solid var(--border2);color:var(--text);padding:8px;border-radius:8px;font-size:12px">
+                  <option value="">selecione...</option>
+                  <option value="GET /api/status">GET /api/status</option>
+                  <option value="GET /api/models">GET /api/models</option>
+                  <option value="GET /api/agents">GET /api/agents</option>
+                  <option value="GET /api/audit">GET /api/audit</option>
+                  <option value="GET /api/files">GET /api/files</option>
+                </select>
+                <input type="text" id="apiTestCmd" placeholder="GET /api/status" style="flex:1;background:var(--card2);border:1px solid var(--border2);color:var(--text);padding:8px;border-radius:8px;font-size:12px;outline:none">
+                <button class="btn primary" onclick="apiTest()">▶ Executar</button>
+              </div>
+            </div>
+            <pre id="apiTestOut" style="margin-top:12px;background:#0a0a12;border:1px solid var(--border);border-radius:8px;padding:11px;font-size:11px;overflow:auto;max-height:280px;white-space:pre-wrap;color:var(--text)"></pre>
+          </div>
+        </div>
+      </div>
+
+      <!-- SETTINGS -->
+      <div class="panel" id="settingsPanel">
+        <div class="panel-head"><div class="ph-title">⚙️ Configurações <span class="ph-sub">Chaves e integrações</span></div></div>
+        <div class="pscroll" id="settingsScroll">
+          <div class="psub">Chaves ficam só no seu navegador (localStorage) ou no cofre do backend. Nada é enviado a terceiros sem sua ação.</div>
+
+          <div class="card" id="bkCard">
+            <h3>🖥️ Backend próprio (NEXUS AI)</h3>
+            <div class="field"><label>URL do servidor (rode: node server/server.js)</label><input type="url" id="bkUrl" placeholder="http://localhost:3000"></div>
+            <div class="field"><label>Token de acesso (NEXUS_AUTH_TOKEN, se houver)</label><input type="password" id="bkToken"></div>
+            <div class="row"><button class="btn primary" onclick="bkSave()">💾 Salvar e conectar</button><span id="bkStatus"><span class="hint">sem backend: modo local do navegador</span></span></div>
+            <div class="hint">Conectado, o terminal executa comandos reais, o chat usa streaming SSE dos seus provedores e /agent ativa o orquestrador.</div>
+          </div>
+
+          <div class="card">
+            <h3>🧠 Modelos de IA (gratuitos)</h3>
+            <div class="field"><label>OpenRouter API Key (modelos :free)</label><input type="password" id="k_openrouter" placeholder="sk-or-v1-..."></div>
+            <div class="field"><label>Groq API Key (rápido, free)</label><input type="password" id="k_groq" placeholder="gsk_..."></div>
+            <div class="field"><label>NVIDIA NIM API Key</label><input type="password" id="k_nvidia" placeholder="nvapi-..."></div>
+            <div class="field"><label>Google Gemini API Key</label><input type="password" id="k_gemini" placeholder="AIza..."></div>
+            <div class="field"><label>Servidor OpenAI-compatível (URL base)</label><input type="url" id="k_custom" placeholder="https://api.seuservidor.com/v1"></div>
+            <div class="field"><label>Chave do servidor custom (opcional)</label><input type="password" id="k_custom_key" placeholder="Bearer token"></div>
+            <div class="row"><button class="btn primary" onclick="saveKeys()">💾 Salvar chaves</button><span id="keysMsg"></span></div>
+          </div>
+
+          <div class="card">
+            <h3>💬 WhatsApp Bridge</h3>
+            <div class="field"><label>Webhook do bridge</label><input type="url" id="k_wa_webhook" placeholder="https://.../webhook"></div>
+            <div class="field"><label>Token secreto</label><input type="password" id="k_wa_token" placeholder="token"></div>
+            <div class="row"><button class="btn green" onclick="testWA()">📡 Testar</button><span id="waMsg"></span></div>
+          </div>
+
+          <div class="card">
+            <h3>🔄 Automação (n8n) e Dados (Supabase)</h3>
+            <div class="field"><label>Webhook n8n</label><input type="url" id="k_n8n" placeholder="https://seu-n8n.com/webhook/nexus"></div>
+            <div class="field"><label>Supabase URL</label><input type="url" id="k_supabase" placeholder="https://xyz.supabase.co"></div>
+            <div class="field"><label>Supabase anon key</label><input type="password" id="k_supabase_key" placeholder="eyJ..."></div>
+            <div class="row"><button class="btn primary" onclick="saveKeys()">💾 Salvar</button><button class="btn" onclick="testN8N()">🔄 Testar n8n</button><span id="n8nMsg"></span></div>
+          </div>
+
+          <div class="card">
+            <h3>🎨 Aparência</h3>
+            <div class="row">
+              <button class="btn" onclick="setAccent('var(--purple)')"> Roxo</button>
+              <button class="btn" onclick="setAccent('var(--blue)')"> Azul</button>
+              <button class="btn" onclick="setAccent('var(--green)')"> Verde</button>
+              <button class="btn" onclick="setAccent('#ec4899')"> Rosa</button>
+            </div>
           </div>
         </div>
       </div>
     </div>
+
+    <!-- RIGHT PANEL -->
+    <aside class="right-panel" id="rightPanel">
+      <div class="rp-card">
+        <div class="rp-title">Agentes Ativos <span class="ct" id="rpAgentCt">5</span></div>
+        <div id="rpAgents"></div>
+      </div>
+      <div class="rp-card">
+        <div class="rp-title">Modelos</div>
+        <div id="rpModels"></div>
+      </div>
+      <div class="rp-card">
+        <div class="rp-title">Ferramentas Rápidas</div>
+        <div class="tool-grid">
+          <div class="tool-cell" onclick="go('terminal')"><div class="ti">⌨️</div>Terminal</div>
+          <div class="tool-cell" onclick="runPyTool()"><div class="ti">🐍</div>Python</div>
+          <div class="tool-cell" onclick="go('browser')"><div class="ti">🌐</div>Navegador</div>
+          <div class="tool-cell" onclick="go('arquivos')"><div class="ti">📂</div>Arquivos</div>
+          <div class="tool-cell" onclick="go('github')"><div class="ti">🐙</div>GitHub</div>
+          <div class="tool-cell" onclick="webSearch()"><div class="ti">🔍</div>Web Search</div>
+        </div>
+      </div>
+      <div class="rp-card">
+        <div class="rp-title">Plugins Instalados <span class="ct" id="rpPlugCt">0</span></div>
+        <div id="rpPlugins"></div>
+      </div>
+    </aside>
   </div>
 
-  <div class="statusbar">
-    <span>Modelo: <b id="sbModel">demo</b></span>
-    <span>Plugins: <b id="sbPlug">0</b></span>
-    <span>Python: <b id="sbPy">aguardando</b></span>
-    <span>Voz: <b id="sbVoice">🔇</b></span>
-    <span>Sandbox: <b class="live" id="sbSandbox">isolado ✓</b></span>
-    <span class="spacer"></span>
-    <span><b id="sbClock">--:--</b> <span id="sbDate"></span></span>
+  <!-- BOTTOM BAR -->
+  <div class="bottombar">
+    <div class="bb-input">
+      <span style="color:var(--purple);font-size:15px">›</span>
+      <input type="text" id="bbInput" placeholder="Digite sua mensagem..." onkeydown="if(event.key==='Enter'){document.getElementById('chatText').value=this.value;this.value='';go('chat');sendMsg();}">
+    </div>
+    <div class="bb-ctrls">
+      <button class="bb-ctrl" onclick="bbInsert('/help')">⚡ Comandos</button>
+      <button class="bb-ctrl" onclick="bbInsert('@')">👥 Menções</button>
+      <button class="bb-ctrl" onclick="document.getElementById('fileInput').click()">📎 Arquivos</button>
+      <button class="bb-ctrl" id="bbVoice" onclick="toggleMic()">🎤 Voz</button>
+    </div>
+    <div class="adv-toggle on" id="advToggle" onclick="toggleAdvanced()">
+      <span>Modo Avançado</span>
+      <div class="switch"></div>
+    </div>
   </div>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/xterm@5.3.0/lib/xterm.min.js"></script>
-<script>
-"use strict";
-/* ============ ESTADO ============ */
-const LS = {
-  get: (k, d) => { try { return localStorage.getItem(k) ?? d } catch(e){ return d } },
-  set: (k, v) => { try { localStorage.setItem(k, v) } catch(e){} }
-};
-let ttsOn = false, rec = null, recording = false;
-let pyodide = null, pyLoading = false;
-
-/* ============ BOOT ============ */
-const bootLines = [
-  "▸ inicializando núcleo NEXUS...",
-  "▸ carregando sandbox isolado... ok",
-  "▸ conectando marketplace de plugins... ok",
-  "▸ preparando terminal virtual... ok",
-  "▸ verificando voz e navegador ao vivo... ok",
-  "▸ super agente pronto. bem-vindo."
-];
-let bi = 0;
-const bootTimer = setInterval(() => {
-  document.getElementById("bootlog").textContent += bootLines[bi] + "\n";
-  bi++;
-  if (bi >= bootLines.length) {
-    clearInterval(bootTimer);
-    setTimeout(() => {
-      const b = document.getElementById("boot");
-      b.style.opacity = 0;
-      setTimeout(() => b.remove(), 800);
-      bootDone();
-    }, 500);
-  }
-}, 380);
-
-function bootDone(){
-  addMsg("bot", "Fala! Eu sou o *NEXUS Super Agent*, seu agente de IA que roda direto no navegador.\n\nO que eu já faço agora:\n• Chat com vários modelos (NVIDIA, MiniMax, Gemini, OpenRouter, servidor próprio)\n• Terminal próprio com Python de verdade (Pyodide)\n• Navegador ao vivo com preview de HTML\n• Voz: falo e escuto em português\n• Marketplace de plugins estilo Acode\n• Integrações: WhatsApp, n8n, Supabase, Firebase\n\nDica: clique no 🎤 pra falar comigo, no 🔈 pra eu responder falando, ou digite /help no chat.", "núcleo local");
-  renderPlugins();
-}
-
-/* ============ NAVEGAÇÃO ============ */
-function go(p){
-  document.querySelectorAll(".panel").forEach(x => x.classList.remove("active"));
-  document.querySelectorAll(".nav-btn").forEach(x => x.classList.remove("active"));
-  document.getElementById(p + "Panel").classList.add("active");
-  document.getElementById("nb-" + p).classList.add("active");
-  if (p === "terminal") setTimeout(initTerm, 60);
-}
-
-/* ============ CHAT ============ */
-const chipsData = [
-  ["Me apresente seus comandos", "/help"],
-  ["Rode Python no terminal", "python print(sum(range(101)))"],
-  ["Crie uma landing page", "crie uma landing page NEXUS para eu ver no navegador"],
-  ["Testar integração n8n", "/n8n ping"]
-];
-function renderChips(){
-  document.getElementById("chips").innerHTML = chipsData.map(([t, c]) => `<span class="chip" onclick="document.getElementById('chatText').value=${JSON.stringify(c)};sendMsg()">${t}</span>`).join("");
-}
-function addMsg(kind, text, who){
-  const sc = document.getElementById("chatScroll");
-  const d = document.createElement("div");
-  d.className = "msg " + kind;
-  if (kind === "bot") d.innerHTML = `<div class="who">${who || "NEXUS"} <small>· ${(new Date()).toLocaleTimeString("pt-BR",{hour:"2-digit",minute:"2-digit"})}</small></div>`;
-  d.appendChild(document.createTextNode(text));
-  sc.appendChild(d);
-  sc.scrollTop = sc.scrollHeight;
-  return d;
-}
-function addTyping(){
-  const sc = document.getElementById("chatScroll");
-  const d = document.createElement("div");
-  d.className = "typing"; d.id = "typing";
-  d.innerHTML = "<i></i><i></i><i></i>";
-  sc.appendChild(d); sc.scrollTop = sc.scrollHeight;
-}
-function removeTyping(){ document.getElementById("typing")?.remove() }
-
-async function sendMsg(){
-  const ta = document.getElementById("chatText");
-  const text = ta.value.trim();
-  if (!text) return;
-  ta.value = "";
-  addMsg("user", text);
-  addTyping();
-
-  try {
-    if (text.startsWith("/")) { await handleCommand(text); }
-    else { await routeLLM(text); }
-  } catch (e) {
-    addMsg("bot", "Deu erro aqui: " + e.message, "sistema");
-  }
-  removeTyping();
-}
-
-async function handleCommand(cmd){
-  const [c, ...rest] = cmd.slice(1).split(/\s+/);
-  const arg = rest.join(" ");
-  if (c === "help") {
-    addMsg("bot", "Comandos do agente:\n/help · esta ajuda\n/python <código> · roda Python no sandbox\n/js <código> · roda JavaScript\n/n8n <ação> · dispara fluxo no n8n (configure nas Chaves)\n/wa <mensagem> · envia pelo WhatsApp Bridge\n/prompt <tema> · biblioteca de prompts prontos\n/browser <url> · abre no navegador ao vivo\n/plugin <nome> · instala plugin do marketplace\n/model · modelo atual e status das chaves", "CLI");
-    return;
-  }
-  if (c === "python") { addMsg("bot", "Rodei no sandbox:\n" + await runPython(arg), "python"); return; }
-  if (c === "js") { try { addMsg("bot", "→ " + String(eval(arg)), "js sandbox") } catch(e){ addMsg("bot", "Erro: " + e.message, "js sandbox") } return; }
-  if (c === "n8n") { addMsg("bot", await callWebhook("k_n8n", {action: arg || "ping", source: "nexus-super-agent"}), "n8n"); return; }
-  if (c === "wa") { addMsg("bot", await callWebhook("k_wa_webhook", {message: arg, source: "nexus-super-agent", channel: "whatsapp"}), "whatsapp bridge"); return; }
-  if (c === "browser") { go("browser"); document.getElementById("urlBar").value = arg.startsWith("http") ? arg : "https://" + arg; navBrowser(); addMsg("bot", "Abri " + arg + " no navegador ao vivo.", "navegador"); return; }
-  if (c === "prompt") { addMsg("bot", promptLibrary(arg), "prompt library"); return; }
-  if (c === "model") { addMsg("bot", "Modelo: " + curModel() + "\nChaves salvas: " + ["openrouter","nvidia","minimax","gemini"].filter(m => LS.get("k_" + m)).join(", ") || "nenhuma", "config"); return; }
-  if (c === "plugin") { const p = PLUGINS.find(p => p.id === arg || p.name.toLowerCase().includes(arg.toLowerCase())); if (p) { p.installed = true; savePlugs(); renderPlugins(); addMsg("bot", "Plugin instalado: " + p.name, "marketplace"); } else addMsg("bot", "Não achei o plugin: " + arg, "marketplace"); return; }
-  addMsg("bot", "Comando desconhecido: /" + c + ". Digite /help.", "CLI");
-}
-
-function curModel(){
-  const sel = document.getElementById("modelSel").value;
-  const id = document.getElementById("modelId").value.trim();
-  return sel === "demo" ? "modo demo local" : (sel + (id ? " · " + id : ""));
-}
-
-/* ---- Roteador multi-modelo ---- */
-async function routeLLM(userText){
-  const sel = document.getElementById("modelSel").value;
-  const key = LS.get("k_" + sel);
-  const modelId = document.getElementById("modelId").value.trim();
-  const sys = "Você é o NEXUS Super Agent, um agente de IA brasileiro, direto, amigável e profissional. Responda em português do Brasil, no estilo você-e-eu, sem jargão. Se pedirem código, entregue código pronto. Se pedirem algo que o app faz (terminal, navegador, plugins), cite os comandos disponíveis (/help).";
-  const history = LS.get("nexus_history", "[]");
-  let hist = [];
-  try { hist = JSON.parse(history) } catch(e){}
-
-  try {
-    let reply = null;
-    if (sel === "demo" || (sel !== "custom" && !key)) {
-      reply = demoReply(userText);
-      await sleep(700);
-    } else if (sel === "gemini") {
-      reply = await callGemini(key, modelId || "gemini-2.0-flash", sys, userText, hist);
-    } else {
-      reply = await callOpenAICompat(sel, key, modelId, sys, userText, hist);
-    }
-    hist.push({u: userText, a: reply});
-    LS.set("nexus_history", JSON.stringify(hist.slice(-20)));
-    addMsg("bot", reply, sel === "demo" ? "núcleo local" : sel);
-    speak(reply);
-  } catch (e) {
-    addMsg("bot", "Não consegui falar com o modelo (" + e.message + "). No modo demo eu funciono sem chave: selecione 'Modo Demo' ou configure sua chave em ⚙️ Chaves.", "sistema");
-  }
-}
-
-async function callOpenAICompat(sel, key, modelId, sys, userText, hist){
-  const urls = {
-    openrouter: "https://openrouter.ai/api/v1/chat/completions",
-    nvidia: "https://integrate.api.nvidia.com/v1/chat/completions",
-    minimax: "https://api.minimax.chat/v1/text/chatcompletion_v2",
-    custom: LS.get("k_custom", "")
-  };
-  const defModels = { openrouter: "google/gemini-2.0-flash-exp:free", nvidia: "meta/llama-3.1-8b-instruct", minimax: "abab6.5s-chat", custom: "gpt-4o-mini" };
-  const body = JSON.stringify({
-    model: modelId || defModels[sel],
-    messages: [{role: "system", content: sys}, ...hist.slice(-6).map(h => ({role: "user", content: h.u})), {role: "user", content: userText}],
-    temperature: 0.7, max_tokens: 1024
-  });
-  const headers = { "Content-Type": "application/json", "Authorization": "Bearer " + key };
-  if (sel === "openrouter") headers["HTTP-Referer"] = location.origin || "https://github.com/nicorudorlk22-gif/nexus-super-agent";
-  const r = await fetch(urls[sel], { method: "POST", headers, body });
-  if (!r.ok) throw new Error("HTTP " + r.status + " " + (await r.text()).slice(0, 120));
-  const j = await r.json();
-  return j.choices?.[0]?.message?.content ?? "(resposta vazia)";
-}
-
-async function callGemini(key, modelId, sys, userText, hist){
-  const url = "https://generativelanguage.googleapis.com/v1beta/models/" + (modelId || "gemini-2.0-flash") + ":generateContent?key=" + key;
-  const contents = hist.slice(-6).map(h => ({role: "model", parts: [{text: h.a}]}, {role: "user", parts: [{text: h.u}]}));
-  contents.push({role: "user", parts: [{text: userText}]});
-  const r = await fetch(url, { method: "POST", headers: {"Content-Type": "application/json"}, body: JSON.stringify({ system_instruction: {parts: [{text: sys}]}, contents, generationConfig: {temperature: 0.7, maxOutputTokens: 1024} }) });
-  if (!r.ok) throw new Error("HTTP " + r.status);
-  const j = await r.json();
-  return j.candidates?.[0]?.content?.parts?.[0]?.text ?? "(resposta vazia)";
-}
-
-function demoReply(t){
-  const s = t.toLowerCase();
-  if (/land|site|página|pagina/.test(s)) return "Fechado. Cole isto no campo do navegador e clique em Preview HTML:\n\n<h1 style=\"font-family:sans-serif;background:#07090c;color:#d4af37;padding:60px;text-align:center\">NEXUS</h1><p style=\"text-align:center;color:#22c55e\">Seu ecossistema digital, no ar.</p>\n\nSe quiser, eu mando versão completa com botões e animação.";
-  if (/python/.test(s)) return "Consigo rodar Python de verdade aqui no sandbox (Pyodide/WebAssembly). Exemplos:\n/python print(sum(range(101)))\n/python import math; print(math.factorial(50))\nNo terminal também: digite python e cole o código.";
-  if (/whats|zap/.test(s)) return "O WhatsApp conecta por bridge: configure o webhook em ⚙️ (WhatsApp Bridge) e use /wa <mensagem>. Com n8n ou Base44 você recebe e responde mensagens reais.";
-  if (/olá|ola|oi|bom dia|boa tarde|boa noite|e a[íi]/.test(s)) return "E aí! Tudo certo por aqui. Posso conversar, programar, rodar Python, abrir sites e automatizar fluxos. Por onde começamos?";
-  if (/quem|o que você|voce/.test(s)) return "Sou o NEXUS Super Agent: open source, roda 100% no seu navegador, fala e escuta, e tem marketplace de plugins. Multi-modelo: NVIDIA NIM, MiniMax, Gemini, OpenRouter e qualquer servidor OpenAI-compatível.";
-  if (/plug|marketplace|extens/.test(s)) return "O marketplace tem integrações (WhatsApp, n8n, Supabase, Firebase), ferramentas de dev, voz e visual. Abra a aba 🧩 e instale o que quiser. Tudo salvo no seu navegador.";
-  return "Entendi: \"" + t + "\".\nNo modo demo eu respondo localmente sem gastar tokens. Pra conversa completa, coloque uma chave grátis (OpenRouter ou Gemini) em ⚙️ Chaves e escolha o modelo no topo. Enquanto isso, posso: rodar código (/python, /js), abrir sites (/browser), disparar automações (/n8n) e enviar pelo WhatsApp (/wa).";
-}
-
-/* ---- Biblioteca de prompts ---- */
-function promptLibrary(topic){
-  const lib = {
-    copy: "PROMPT DE COPY QUE VENDE\n\nVocê é um copywriter brasileiro. Escreva [peça] para [produto], público [público]. Estrutura: dor real, agitação honesta, solução, prova social, CTA. Tom: direto, você-e-eu, sem jargão. Proibido prometer resultado garantido.",
-    codigo: "PROMPT DE CÓDIGO\n\nVocê é um engenheiro sênior. Tarefa: [objetivo]. Restrições: código completo e rodável, comentários curtos em pt-BR, sem placeholder. Depois do código, liste o que testar.",
-    estudo: "PROMPT DE ESTUDO ACELERADO\n\nExplique [tema] como se eu fosse iniciante curioso. Depois: 1) analogia do dia a dia, 2) explicação técnica simples, 3) três exercícios práticos, 4) o que estudar a seguir.",
-    "": "Temas disponíveis: copy, codigo, estudo. Exemplo: /prompt copy"
-  };
-  const s = (topic || "").toLowerCase();
-  return lib[s] || lib[s.split(" ")[0]] || lib[""];
-}
-
-/* ============ TERMINAL ============ */
-let term = null;
-const FILES = {
-  "bem-vindo.txt": "NEXUS Super Agent © 2026\nTerminal virtual com Python (Pyodide), comandos locais e integrações.\nDigite: help",
-  "objetivos.md": "# Objetivos do projeto\n- multi-modelo com chaves grátis\n- marketplace estilo Acode\n- voz em pt-BR\n- integração WhatsApp, n8n, Supabase\n"
-};
-function initTerm(){
-  if (term) { term.focus(); return; }
-  term = new Terminal({
-    cursorBlink: true, fontSize: 13,
-    theme: { background: "#0a0f0d", foreground: "#d8e2dc", cursor: "#d4af37", green: "#22c55e" },
-    fontFamily: "Consolas, monospace"
-  });
-  term.open(document.getElementById("term"));
-  let buf = "";
-  const prompt = () => term.write("\r\n\x1b[38;5;178magent@nexus\x1b[0m:\x1b[38;5;46m~\x1b[0m$ ");
-  term.write("\x1b[38;5;178m  NEXUS\x1b[0m terminal · sandbox isolado · digite \x1b[1mhelp\x1b[0m\r\n");
-  prompt();
-  term.onData(async d => {
-    if (d === "\r") {
-      term.write("\r\n");
-      await runShell(buf.trim());
-      buf = ""; prompt();
-    } else if (d === "\u007f") {
-      if (buf.length) { buf = buf.slice(0, -1); term.write("\b \b"); }
-    } else if (d.charCodeAt(0) > 31) { buf += d; term.write(d); }
-  });
-}
-async function runShell(line){
-  if (!line) return;
-  const [cmd, ...args] = line.split(/\s+/);
-  const arg = args.join(" ");
-  const w = t => term.write(t + "\r\n");
-  try {
-    switch (cmd) {
-      case "help": w("comandos:\r\n  help             esta ajuda\r\n  ls / cat <arq>   arquivos locais\r\n  echo <txt>       imprime\r\n  python <cod>     roda Python real (Pyodide)\r\n  js <cod>         roda JavaScript\r\n  open <url>       abre no navegador ao vivo\r\n  install <plugin> instala plugin do marketplace\r\n  wa <msg>         envia pelo WhatsApp Bridge\r\n  n8n <acao>       dispara automação\r\n  neofetch         info do sistema\r\n  date / whoami / clear"); break;
-      case "ls": w(Object.keys(FILES).join("   ")); break;
-      case "cat": w(FILES[arg] ?? "cat: " + arg + ": arquivo não encontrado"); break;
-      case "echo": w(arg); break;
-      case "date": w(new Date().toLocaleString("pt-BR")); break;
-      case "whoami": w("agent — NEXUS Super Agent (sandbox isolado, sem acesso ao seu sistema)"); break;
-      case "clear": term.clear(); return;
-      case "neofetch": w("\x1b[38;5;178m   ◆ NEXUS    \x1b[0m OS: navegador (sandbox)\r\n   ◆ SUPER   Kernel: WebAssembly + JS\r\n   ◆ AGENT   Modelo: " + curModel() + "\r\n            Plugins: " + PLUGINS.filter(p=>p.installed).length + "/" + PLUGINS.length + "\r\n            Python: " + (pyodide ? "Pyodide ✓" : "disponível (rode 'python ...')") + "\r\n            Voz: " + (ttsOn ? "fala ✓" : "mudo")); break;
-      case "open": go("browser"); document.getElementById("urlBar").value = arg.startsWith("http") ? arg : "https://" + arg; navBrowser(); w("abri " + arg + " no navegador ao vivo"); break;
-      case "install": { const p = PLUGINS.find(p => p.id === arg || p.name.toLowerCase().includes((arg||"").toLowerCase())); if (p) { p.installed = true; savePlugs(); renderPlugins(); w("plugin instalado: " + p.name); } else w("install: plugin não encontrado: " + arg); break; }
-      case "wa": w(await callWebhook("k_wa_webhook", {message: arg, source: "terminal"})); break;
-      case "n8n": w(await callWebhook("k_n8n", {action: arg, source: "terminal"})); break;
-      case "python": w("→ " + await runPython(arg)); break;
-      case "js": w("→ " + String(eval(arg))); break;
-      default: w(cmd + ": comando não encontrado. digite help");
-    }
-  } catch (e) { w("erro: " + e.message); }
-}
-async function runPython(code){
-  if (!code) return "uso: python <código>. ex.: python print(sum(range(101)))";
-  if (!pyodide) {
-    if (!pyLoading) {
-      pyLoading = true;
-      document.getElementById("sbPy").textContent = "carregando Pyodide...";
-      const s = document.createElement("script");
-      s.src = "https://cdn.jsdelivr.net/pyodide/v0.26.4/full/pyodide.js";
-      document.head.appendChild(s);
-      await new Promise(r => s.onload = r);
-      pyodide = await loadPyodide({indexURL: "https://cdn.jsdelivr.net/pyodide/v0.26.4/full/"});
-      document.getElementById("sbPy").textContent = "Python 3.12 ✓";
-    } else return "Pyodide ainda está carregando, tente de novo em alguns segundos";
-  }
-  try {
-    pyodide.runPython(`import sys, io\nsys.stdout = io.StringIO()\n`);
-    const result = pyodide.runPython(code);
-    const out = pyodide.runPython("sys.stdout.getvalue()").trim();
-    return [out, (result !== undefined ? String(result) : "")].filter(Boolean).join("\n") || "(sem saída)";
-  } catch (e) { return "erro Python: " + e.message; }
-}
-
-/* ============ NAVEGADOR ============ */
-function navBrowser(){
-  const u = document.getElementById("urlBar").value.trim();
-  if (!u) return;
-  if (u.startsWith("<")) { previewHTML(); return; }
-  document.getElementById("webFrame").src = u.startsWith("http") ? u : "https://" + u;
-}
-function previewHTML(){
-  const raw = document.getElementById("urlBar").value.trim();
-  const html = raw.startsWith("http") ? "<!DOCTYPE html><html><body style='font-family:sans-serif;padding:40px'>Cole HTML direto na barra e clique em Preview HTML.</body></html>" : raw;
-  document.getElementById("webFrame").srcdoc = html;
-}
-function openInNewTab(){
-  const u = document.getElementById("urlBar").value.trim();
-  window.open(u.startsWith("http") ? u : "https://" + u, "_blank");
-}
-
-/* ============ PLUGINS ============ */
-const PLUGINS = [
-  {id:"wa-bridge", icon:"💬", name:"WhatsApp Bridge", cat:"Integração", desc:"Conecta o agente ao WhatsApp via webhook (Base44, n8n ou API Business). Envie e receba mensagens com /wa.", effect:"usa a config de WhatsApp em ⚙️"},
-  {id:"n8n-flow", icon:"🔄", name:"n8n Automação", cat:"Automação", desc:"Dispara fluxos do n8n a partir do chat e do terminal. Ideal para rotinas de marketing e vendas.", effect:"comando /n8n fica ativo"},
-  {id:"supabase-mem", icon:"🐘", name:"Memória Supabase", cat:"Integração", desc:"Salva o histórico da conversa no seu Supabase. Memória real entre sessões e dispositivos.", effect:"requer config Supabase"},
-  {id:"firebase-sync", icon:"🔥", name:"Firebase Sync", cat:"Integração", desc:"Sincronização de configuração e histórico via Firebase. Multi-dispositivo.", effect:"roadmap v1.1"},
-  {id:"opencode", icon:"🤖", name:"OpenCode Agent Loop", cat:"Dev", desc:"Modo agente: planeja, executa e revisa em loop, chamando os comandos do terminal.", effect:"ativar em Dev → agente"},
-  {id:"py-lab", icon:"🐍", name:"Python Lab", cat:"Dev", desc:"Pyodide completo com bibliotecas embutidas. Rode análise e scripts sem servidor.", effect:"já embutido"},
-  {id:"js-runner", icon:"⚡", name:"JS Runner", cat:"Dev", desc:"Executa JavaScript no sandbox com /js e no terminal.", effect:"já embutido"},
-  {id:"voice-pro", icon:"🎙️", name:"Voz Pro (pt-BR)", cat:"Voz e Mídia", desc:"Reconhecimento de fala e voz de resposta em português, com ajuste de velocidade.", effect:"botões 🎤 e 🔈"},
-  {id:"vision-cam", icon:"📸", name:"Vision Cam", cat:"Voz e Mídia", desc:"Captura da câmera e envio de imagem para modelos com visão (roadmap de captura).", effect:"roadmap v1.1"},
-  {id:"gold-theme", icon:"🏆", name:"Tema NEXUS Gold", cat:"Visual", desc:"Identidade preto, dourado e verde com animações fluidas.", effect:"tema padrão"},
-  {id:"matrix", icon:"🌧️", name:"Chuva Matrix", cat:"Visual", desc:"Modo visual inspirado em terminal clássico para o fundo animado.", effect:"alterna partículas"},
-  {id:"prompt-lib", icon:"📚", name:"Prompt Library BR", cat:"Produtividade", desc:"Prompts prontos em português para copy, código e estudo. Use /prompt.", effect:"comando /prompt"}
-];
-PLUGINS.forEach(p => p.installed = false);
-function savePlugs(){
-  LS.set("nexus_plugins", JSON.stringify(PLUGINS.map(p => p.id)));
-  applyPlugins();
-}
-function applyPlugins(){
-  const on = PLUGINS.filter(p => p.installed);
-  document.getElementById("sbPlug").textContent = on.length + "/" + PLUGINS.length;
-  document.getElementById("plugBadge").textContent = on.length;
-  matrixOn = PLUGINS.find(p => p.id === "matrix")?.installed;
-  document.getElementById("engineTag").textContent = curModel();
-}
-let matrixOn = false;
-function renderPlugins(){
-  const q = (document.getElementById("plugSearch")?.value || "").toLowerCase();
-  const c = document.getElementById("plugCat")?.value || "";
-  const g = document.getElementById("plugGrid");
-  const saved = JSON.parse(LS.get("nexus_plugins", "[]"));
-  PLUGINS.forEach(p => p.installed = saved.includes(p.id) || ["py-lab","js-runner","voice-pro","gold-theme","prompt-lib"].includes(p.id));
-  g.innerHTML = PLUGINS
-    .filter(p => (!q || p.name.toLowerCase().includes(q) || p.desc.toLowerCase().includes(q)) && (!c || p.cat === c))
-    .map(p => `
-    <div class="plug ${p.installed ? "installed" : ""}">
-      <div class="icon">${p.icon}</div>
-      <h3>${p.name}</h3>
-      <p>${p.desc}</p>
-      <div class="meta"><span class="cat">${p.cat}</span><span class="state">${p.installed ? "● instalado" : "○ disponível"}</span></div>
-      <div class="hint">efeito: ${p.effect}</div>
-      <div class="actions">
-        <button class="btn ${p.installed ? "" : "green"}" onclick="togglePlug('${p.id}')">${p.installed ? "Remover" : "Instalar"}</button>
-        <button class="btn" onclick="addMsg('user','/plugin ${p.id}');sendMsg()">Testar</button>
-      </div>
-    </div>`).join("");
-  applyPlugins();
-}
-function togglePlug(id){
-  const p = PLUGINS.find(p => p.id === id);
-  p.installed = !p.installed;
-  savePlugs(); renderPlugins();
-}
-
-/* ============ INTEGRAÇÕES ============ */
-function saveKeys(){
-  ["k_openrouter","k_nvidia","k_minimax","k_gemini","k_custom","k_custom_key","k_wa_webhook","k_wa_token","k_n8n","k_supabase","k_supabase_key","k_firebase"].forEach(k => {
-    const el = document.getElementById(k);
-    if (el) LS.set(k, el.value.trim());
-  });
-  document.getElementById("keysMsg").innerHTML = '<span class="ok-msg">✓ salvo no navegador</span>';
-  document.getElementById("engineTag").textContent = curModel();
-  setTimeout(() => document.getElementById("keysMsg").innerHTML = "", 2500);
-}
-function loadKeys(){
-  ["k_openrouter","k_nvidia","k_minimax","k_gemini","k_custom","k_custom_key","k_wa_webhook","k_wa_token","k_n8n","k_supabase","k_supabase_key","k_firebase"].forEach(k => {
-    const el = document.getElementById(k);
-    if (el) el.value = LS.get(k, "");
-  });
-}
-async function callWebhook(keyId, payload){
-  const url = LS.get(keyId, "");
-  if (!url) return "⚠️ configure o webhook em ⚙️ Configurações primeiro";
-  const headers = {"Content-Type": "application/json"};
-  const tok = LS.get("k_wa_token", "");
-  if (keyId === "k_wa_webhook" && tok) headers["Authorization"] = "Bearer " + tok;
-  try {
-    const r = await fetch(url, {method: "POST", headers, body: JSON.stringify(payload)});
-    return "✓ enviado · HTTP " + r.status + (r.ok ? "" : " (verifique o endpoint)");
-  } catch (e) { return "⚠️ não consegui alcançar o webhook (CORS ou URL). Use um bridge que aceite chamadas do navegador, ou rode pelo n8n/servidor."; }
-}
-async function testWA(){
-  const m = document.getElementById("waMsg");
-  m.innerHTML = '<span class="hint">testando...</span>';
-  const r = await callWebhook("k_wa_webhook", {test: true, source: "nexus-super-agent"});
-  m.innerHTML = r.startsWith("✓") ? '<span class="ok-msg">' + r + '</span>' : '<span class="err-msg">' + r + '</span>';
-}
-async function testN8N(){
-  const m = document.getElementById("n8nMsg");
-  m.innerHTML = '<span class="hint">testando...</span>';
-  const r = await callWebhook("k_n8n", {test: true, action: "ping"});
-  m.innerHTML = r.startsWith("✓") ? '<span class="ok-msg">' + r + '</span>' : '<span class="err-msg">' + r + '</span>';
-}
-
-/* ============ VOZ ============ */
-function speak(text){
-  if (!ttsOn || !window.speechSynthesis) return;
-  const clean = text.replace(/[*_`#>/]|```.*?```/gs, "").slice(0, 500);
-  const u = new SpeechSynthesisUtterance(clean);
-  u.lang = "pt-BR";
-  const v = speechSynthesis.getVoices().find(v => v.lang.startsWith("pt"));
-  if (v) u.voice = v;
-  u.rate = 1.05;
-  speechSynthesis.cancel();
-  speechSynthesis.speak(u);
-}
-function toggleTTS(){
-  ttsOn = !ttsOn;
-  document.getElementById("ttsBtn").textContent = ttsOn ? "🔊" : "🔈";
-  document.getElementById("ttsBtn").classList.toggle("rec", ttsOn);
-  document.getElementById("sbVoice").textContent = ttsOn ? "🔊 fala" : "🔇";
-  if (ttsOn) speak("Voz ativada. Agora eu falo com você.");
-}
-function toggleMic(){
-  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-  const btn = document.getElementById("micBtn");
-  if (!SR) { addMsg("bot", "Seu navegador não tem reconhecimento de voz. Use o Chrome ou Edge.", "sistema"); return; }
-  if (recording) { rec.stop(); return; }
-  rec = new SR();
-  rec.lang = "pt-BR"; rec.interimResults = false;
-  rec.onstart = () => { recording = true; btn.classList.add("rec"); document.getElementById("sbVoice").textContent = "🎤 ouvindo"; };
-  rec.onend = () => { recording = false; btn.classList.remove("rec"); document.getElementById("sbVoice").textContent = ttsOn ? "🔊 fala" : "🔇"; };
-  rec.onerror = e => { addMsg("bot", "Não consegui ouvir: " + e.error, "voz"); };
-  rec.onresult = e => {
-    const t = e.results[0][0].transcript;
-    document.getElementById("chatText").value = t;
-    sendMsg();
-  };
-  rec.start();
-}
-
-/* ============ VISUAL ============ */
-function setAccent(c){ document.documentElement.style.setProperty("--accent", c); }
-const canvas = document.createElement("canvas");
-canvas.style.cssText = "position:fixed;inset:0;width:100%;height:100%";
-document.getElementById("particles").appendChild(canvas);
-const ctx = canvas.getContext("2d");
-let dots = [];
-function resizeCv(){ canvas.width = innerWidth; canvas.height = innerHeight; }
-resizeCv(); addEventListener("resize", resizeCv);
-for (let i = 0; i < 70; i++) dots.push({x: Math.random()*innerWidth, y: Math.random()*innerHeight, vx: (Math.random()-.5)*.35, vy: (Math.random()-.5)*.35, r: Math.random()*1.8+.4});
-function drawCv(){
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
-  dots.forEach(d => {
-    d.x += d.vx; d.y += d.vy;
-    if (d.x < 0 || d.x > canvas.width) d.vx *= -1;
-    if (d.y < 0 || d.y > canvas.height) d.vy *= -1;
-    ctx.beginPath();
-    ctx.arc(d.x, d.y, d.r, 0, 7);
-    ctx.fillStyle = matrixOn ? "rgba(34,197,94,.7)" : "rgba(212,175,55,.55)";
-    ctx.fill();
-  });
-  for (let i = 0; i < dots.length; i++) for (let j = i+1; j < dots.length; j++) {
-    const dx = dots[i].x - dots[j].x, dy = dots[i].y - dots[j].y, dist = dx*dx + dy*dy;
-    if (dist < 12000) {
-      ctx.strokeStyle = (matrixOn ? "rgba(34,197,94," : "rgba(212,175,55,") + (0.12 * (1 - dist/12000)) + ")";
-      ctx.beginPath(); ctx.moveTo(dots[i].x, dots[i].y); ctx.lineTo(dots[j].x, dots[j].y); ctx.stroke();
-    }
-  }
-  requestAnimationFrame(drawCv);
-}
-drawCv();
-function tickClock(){
-  const n = new Date();
-  document.getElementById("sbClock").textContent = n.toLocaleTimeString("pt-BR", {hour: "2-digit", minute: "2-digit"});
-  document.getElementById("sbDate").textContent = n.toLocaleDateString("pt-BR", {weekday: "short", day: "2-digit", month: "short"});
-}
-setInterval(tickClock, 1000); tickClock();
-document.getElementById("modelSel").addEventListener("change", () => {
-  document.getElementById("engineTag").textContent = curModel();
-  document.getElementById("sbModel").textContent = document.getElementById("modelSel").value;
-  const defIds = {openrouter: "google/gemini-2.0-flash-exp:free", nvidia: "meta/llama-3.1-8b-instruct", gemini: "gemini-2.0-flash", minimax: "abab6.5s-chat", custom: "", demo: ""};
-  document.getElementById("modelId").value = defIds[document.getElementById("modelSel").value] || "";
-});
-document.getElementById("chatText").addEventListener("keydown", e => {
-  if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendMsg(); }
-});
-const sleep = ms => new Promise(r => setTimeout(r, ms));
-loadKeys(); renderChips();
-</script>
-
-<script>
-/* ===== MODO BACKEND — NEXUS AI Backend v1.5 (server/) =====
-   Quando um backend real está conectado, o chat usa streaming SSE do servidor,
-   o terminal executa comandos REAIS com limites e o Model Hub mostra o catálogo
-   com status de chaves. Sem backend, tudo cai no modo local do navegador. */
-"use strict";
-const _origRouteLLM = routeLLM;
-const BK = {
-  url: LS.get("bk_url", ""), token: LS.get("bk_token", ""), on: false,
-  models: null
-};
-
-function bkFetch(path, opts = {}) {
-  const headers = Object.assign({ "Content-Type": "application/json" }, opts.headers || {});
-  if (BK.token) headers["x-nexus-token"] = BK.token;
-  return fetch(BK.url.replace(/\/$/, "") + path, Object.assign({}, opts, { headers }));
-}
-
-async function bkConnect(verbose) {
-  if (!BK.url) { if (verbose) alert("Informe a URL do backend"); return false; }
-  try {
-    const r = await bkFetch("/api/status");
-    if (!r.ok) throw new Error("HTTP " + r.status);
-    const j = await r.json();
-    BK.on = true;
-    document.getElementById("bkStatus").innerHTML = '<span class="ok-msg">✓ conectado · NEXUS AI Backend ' + (j.version || "?") + " · " + (j.providersConfigured) + " provedor(es) com chave</span>";
-    document.getElementById("engineTag").textContent = "backend real ✓";
-    bkLoadModels();
-    return true;
-  } catch (e) {
-    BK.on = false;
-    document.getElementById("bkStatus").innerHTML = '<span class="err-msg">sem conexão: ' + e.message + " (modo local ativo)</span>";
-    return false;
-  }
-}
-
-async function bkLoadModels() {
-  try {
-    const r = await bkFetch("/api/models");
-    const j = await r.json();
-    BK.models = j.catalog;
-    const sel = document.getElementById("modelSel");
-    const keep = sel.value;
-    sel.innerHTML = '<option value="demo">🧪 Modo Demo (sem chave)</option>';
-    BK.models.forEach(p => {
-      const o = document.createElement("option");
-      o.value = p.id;
-      o.textContent = (p.local ? "🏠 " : (p.hasKey ? "🔑 " : "○ ")) + p.name + (p.hasKey ? "" : " (sem chave)");
-      sel.appendChild(o);
-    });
-    if ([...sel.options].some(o => o.value === keep)) sel.value = keep;
-  } catch (e) { console.warn("catalogo indisponível", e); }
-}
-
-/* Chat via backend com streaming real (SSE) */
-async function bkChat(userText) {
-  const sel = document.getElementById("modelSel").value;
-  const model = document.getElementById("modelId").value.trim();
-  const el = addMsg("bot", "", sel + (model ? " · " + model : "") + " · backend");
-  const tn = document.createTextNode("");
-  el.appendChild(tn);
-  const r = await bkFetch("/api/chat", {
-    method: "POST",
-    body: JSON.stringify({ provider: sel, model, messages: [{ role: "user", content: userText }], stream: true })
-  });
-  if (!r.ok || !r.body) throw new Error("HTTP " + r.status);
-  const reader = r.body.getReader();
-  const dec = new TextDecoder();
-  let buf = "", full = "";
-  while (true) {
-    const { done, value } = await reader.read();
-    if (done) break;
-    buf += dec.decode(value, { stream: true });
-    const lines = buf.split("\n"); buf = lines.pop();
-    for (const line of lines) {
-      if (!line.startsWith("data:")) continue;
-      try {
-        const j = JSON.parse(line.slice(5).trim());
-        if (j.delta) { full += j.delta; tn.data = full; document.getElementById("chatScroll").scrollTop = 1e9; }
-        if (j.error) throw new Error(j.error);
-      } catch (e) { if (e.message && !e.message.includes("JSON")) throw e; }
-    }
-  }
-  if (!full.trim()) throw new Error("resposta vazia do backend");
-  speak(full);
-}
-
-/* Override do roteador de chat: backend primeiro, fallback local */
-routeLLM = async function (userText) {
-  if (userText.startsWith("/agent ")) {
-    const task = userText.slice(7).trim();
-    if (!task) return addMsg("bot", "Uso: /agent <tarefa>. O orquestrador escolhe o especialista.", "CLI");
-    if (!BK.on) return addMsg("bot", "O modo agente precisa do backend conectado. Configure em ⚙️ → Backend.", "sistema");
-    const t = addMsg("bot", "Executando tarefa com o agente especialista...", "orquestrador");
-    try {
-      const r = await bkFetch("/api/agents/run", { method: "POST", body: JSON.stringify({ task, agent: "auto" }) });
-      const j = await r.json();
-      t.remove();
-      if (j.text) { addMsg("bot", j.text, j.agentName || j.agent); speak(j.text); }
-      if (j.toolRuns && j.toolRuns.length) addMsg("bot", "Ferramentas usadas:\n" + j.toolRuns.map(x => "• " + x.tool + (x.ok ? " ✓" : " ✗")).join("\n"), "ferramentas");
-    } catch (e) { t.remove(); addMsg("bot", "Erro no agente: " + e.message, "sistema"); }
-    return;
-  }
-  if (BK.on) {
-    try { await bkChat(userText); return; }
-    catch (e) { addMsg("bot", "Backend falhou (" + e.message + "), respondendo local.", "fallback"); }
-  }
-  return _origRouteLLM(userText);
-};
-
-/* Override do terminal: comandos reais no backend com limites */
-const _runShell = runShell;
-runShell = async function (line) {
-  if (!line) return;
-  const [cmd] = line.split(/\s+/);
-  if (["help", "clear", "neofetch"].includes(cmd)) return _runShell(line);
-  if (BK.on) {
-    const w = t => term.write(String(t).replace(/\n/g, "\r\n") + "\r\n");
-    try {
-      const r = await bkFetch("/api/terminal/exec", { method: "POST", body: JSON.stringify({ cmd: line, timeoutSec: 20 }) });
-      const j = await r.json();
-      if (j.stdout) w(j.stdout);
-      if (j.stderr) w("\x1b[31m" + j.stderr + "\x1b[0m");
-      if (j.error) w("\x1b[31m" + j.error + "\x1b[0m");
-      if (!j.stdout && !j.stderr && !j.error) w("(sem saída · código " + j.code + ")");
-      if (j.timedOut) w("\x1b[31m⏱ tempo limite atingido (20s)\x1b[0m");
-    } catch (e) { w("\x1b[31mbackend inacessível: " + e.message + "\x1b[0m"); }
-    return;
-  }
-  return _runShell(line);
-};
-
-/* Injeta cartão de configuração do backend nas configurações */
-(function () {
-  const card = document.createElement("div");
-  card.className = "set-card";
-  card.innerHTML = `<h3>🖥️ Backend próprio (NEXUS AI)</h3>
-    <div class="field"><label>URL do servidor (rode: node server/server.js)</label>
-      <input type="url" id="bkUrl" placeholder="http://localhost:3000" value="${BK.url}"></div>
-    <div class="field"><label>Token de acesso (NEXUS_AUTH_TOKEN do servidor, se houver)</label>
-      <input type="password" id="bkToken" value="${BK.token}"></div>
-    <div class="row"><button class="btn primary" onclick="bkSave()">💾 Salvar e conectar</button>
-      <span id="bkStatus"><span class="hint">sem backend: modo local do navegador</span></span></div>
-    <div class="hint">Conectado, o terminal executa comandos reais com limites (timeout, jail de workspace, bloqueios), o chat usa os provedores do cofre criptografado do servidor e o comando /agent &lt;tarefa&gt; delega ao orquestrador multiagente.</div>`;
-  document.querySelector(".settings").prepend(card);
-})();
-
-function bkSave() {
-  BK.url = document.getElementById("bkUrl").value.trim();
-  BK.token = document.getElementById("bkToken").value.trim();
-  LS.set("bk_url", BK.url); LS.set("bk_token", BK.token);
-  bkConnect(true).then(ok => { if (ok) addMsg("bot", "Backend conectado. Terminal agora executa comandos reais, chat com streaming e /agent <tarefa> ativa o orquestrador.", "backend"); });
-}
-if (BK.url) bkConnect(false);
-</script>
-
+<script src="https://cdn.jsdelivr.net/npm/marked@12.0.2/marked.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/highlight.js@11.9.0/lib/highlight.min.js"></script>
+<script src="js/app.js"></script>
+<script src="js/backend.js"></script>
 </body>
 </html>
