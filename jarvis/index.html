@@ -1144,8 +1144,8 @@ async function refreshFeed() {
       for (const e of evs) {
         const icon = { PushEvent: "⎇", PullRequestEvent: "⑃", IssuesEvent: "◌", CreateEvent: "✚", IssueCommentEvent: "💬", WatchEvent: "★" }[e.type] || "◈";
         let txt = "";
-        if (e.type === "PushEvent") txt = `${e.repo.name}: push com ${e.payload.size} commit(s)`;
-        else if (e.type === "PullRequestEvent") txt = `PR ${e.payload.pull_request.title} — ${e.payload.action}`;
+        if (e.type === "PushEvent") txt = `${e.repo.name}: push com ${e.payload.size ?? e.payload.commits?.length ?? 0} commit(s)`;
+        else if (e.type === "PullRequestEvent") txt = `PR #${e.payload.number}: ${e.payload.pull_request?.title || "(sem título)"} — ${e.payload.action}`;
         else if (e.type === "IssuesEvent") txt = `Issue: ${e.payload.issue.title} — ${e.payload.action}`;
         else if (e.type === "IssueCommentEvent") txt = `Comentário em #${e.payload.issue.number}: ${e.payload.issue.title}`;
         else txt = `${e.type} em ${e.repo.name}`;
