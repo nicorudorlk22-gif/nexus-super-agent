@@ -1,0 +1,1595 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+<meta name="theme-color" content="#04101b" />
+<title>JARVIS — Command Center v4.0.0</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<style>
+:root{
+  --bg:#04101b; --bg-2:#061626; --sidebar:#061522;
+  --surface:rgba(7,24,39,.92); --surface-2:#091c2d; --surface-3:#0c2337;
+  --line:rgba(94,157,191,.20); --line-strong:rgba(75,177,212,.34);
+  --text:#d5e8f3; --muted:#718da1; --muted-2:#93adbd;
+  --cyan:#52e7f4; --cyan-2:#21b8d2; --mint:#3fe0bd; --blue:#4aafff;
+  --violet:#c28aff; --amber:#f0c66c; --rose:#ee829c;
+  --accent:#52e7f4; --accent-soft:rgba(82,231,244,.14);
+  --panel-radius:12px; --mono:'DM Mono',ui-monospace,monospace;
+}
+[data-theme="ultron"]{ --bg:#120405; --bg-2:#1f0608; --sidebar:#1a0507; --surface:rgba(30,8,10,.92); --surface-2:#2a0a0d; --surface-3:#33100f; --line:rgba(220,120,90,.22); --line-strong:rgba(240,150,110,.4); --text:#f4ddd5; --muted:#a1796f; --muted-2:#c39d92; --accent:#ffb15e; --accent-soft:rgba(255,177,94,.14); }
+[data-theme="matrix"]{ --bg:#020d06; --bg-2:#04170c; --sidebar:#03120a; --surface:rgba(4,26,14,.92); --surface-2:#062312; --surface-3:#0a2f1a; --line:rgba(80,200,120,.2); --line-strong:rgba(90,230,130,.35); --text:#d9f5e1; --muted:#6e9a7c; --muted-2:#93c2a0; --accent:#5dff8f; --accent-soft:rgba(93,255,143,.12); }
+[data-theme="violet"]{ --bg:#0b0416; --bg-2:#12071f; --sidebar:#0e0618; --surface:rgba(20,9,36,.92); --surface-2:#1a0c30; --surface-3:#241241; --line:rgba(160,120,230,.22); --line-strong:rgba(190,150,255,.4); --text:#e5d9f7; --muted:#9484b5; --muted-2:#b3a4d1; --accent:#c28aff; --accent-soft:rgba(194,138,255,.14); }
+[data-theme="amanhecer"]{ --bg:#0d1626; --bg-2:#152238; --sidebar:#101d33; --surface:rgba(22,34,58,.9); --surface-2:#1b2c4a; --surface-3:#233759; --line:rgba(140,170,230,.25); --line-strong:rgba(160,190,255,.45); --text:#eaf1ff; --muted:#8fa3c8; --muted-2:#b0c1de; --accent:#ffb15e; --accent-soft:rgba(255,177,94,.14); }
+
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{
+  font-family:Inter,ui-sans-serif,system-ui,sans-serif;color:var(--text);background:var(--bg);
+  -webkit-font-smoothing:antialiased;overflow:hidden;font-synthesis:none;
+  transition:background .8s ease,color .8s ease;
+  background-image:radial-gradient(1200px 700px at 70% -10%,var(--accent-soft),transparent 60%),
+                   radial-gradient(900px 600px at -10% 110%,rgba(74,175,255,.07),transparent 55%);
+}
+#app{display:grid;grid-template-columns:230px 1fr;grid-template-rows:52px 1fr 74px;height:100vh;transition:grid-template-columns .3s ease}
+#app.nav-hidden{grid-template-columns:0 1fr}
+::selection{background:var(--accent);color:#04101b}
+::-webkit-scrollbar{width:9px;height:9px}
+::-webkit-scrollbar-thumb{background:var(--line-strong);border-radius:9px}
+::-webkit-scrollbar-track{background:transparent}
+
+/* ---------- TOPBAR ---------- */
+.topbar{grid-column:1/3;display:flex;align-items:center;gap:14px;padding:0 16px;border-bottom:1px solid var(--line);background:linear-gradient(180deg,rgba(9,28,45,.7),rgba(6,22,38,.4));backdrop-filter:blur(8px);z-index:40}
+.brand{display:flex;align-items:center;gap:10px;font-weight:800;letter-spacing:.12em;font-size:13px;white-space:nowrap}
+.brand .logo{width:26px;height:26px;border-radius:50%;border:1px solid var(--line-strong);position:relative;display:inline-flex;align-items:center;justify-content:center}
+.brand .logo::before{content:"";width:10px;height:10px;border-radius:50%;background:var(--accent);box-shadow:0 0 12px var(--accent);animation:corePulse 2.4s ease-in-out infinite}
+@keyframes corePulse{0%,100%{transform:scale(1);opacity:.9}50%{transform:scale(1.25);opacity:1}}
+.sys-ok{display:flex;align-items:center;gap:7px;font-size:11px;color:var(--mint);border:1px solid rgba(63,224,189,.3);border-radius:99px;padding:4px 12px;white-space:nowrap}
+.sys-ok .dot{width:7px;height:7px;border-radius:50%;background:var(--mint);box-shadow:0 0 8px var(--mint);animation:blink 2s infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.35}}
+.top-right{margin-left:auto;display:flex;align-items:center;gap:10px}
+.search-wrap{position:relative;flex:0 1 340px;min-width:140px}
+.search-wrap input{width:100%;background:var(--surface-2);border:1px solid var(--line);border-radius:10px;color:var(--text);padding:8px 12px 8px 34px;font-size:13px;outline:none;transition:border-color .2s}
+.search-wrap input:focus{border-color:var(--accent)}
+.search-wrap .k{position:absolute;left:10px;top:50%;transform:translateY(-50%);color:var(--muted);font-size:13px}
+.icon-btn{width:34px;height:34px;border-radius:9px;border:1px solid var(--line);background:var(--surface-2);color:var(--muted-2);cursor:pointer;font-size:15px;display:inline-flex;align-items:center;justify-content:center;transition:.2s}
+.icon-btn:hover{color:var(--accent);border-color:var(--line-strong)}
+.chip{font-size:11px;color:var(--muted-2);border:1px solid var(--line);padding:5px 11px;border-radius:99px;white-space:nowrap}
+.chip b{color:var(--text);font-weight:600}
+
+/* ---------- SIDEBAR ---------- */
+.sidebar{grid-row:2/3;grid-column:1;background:var(--sidebar);border-right:1px solid var(--line);display:flex;flex-direction:column;overflow:hidden auto;transition:.3s}
+.nav-hidden .sidebar{opacity:0}
+.nav-item{display:flex;align-items:center;gap:11px;padding:11px 16px;color:var(--muted-2);font-size:12.5px;font-weight:500;letter-spacing:.04em;cursor:pointer;border-left:2px solid transparent;transition:.18s;text-transform:uppercase}
+.nav-item:hover{color:var(--text);background:rgba(255,255,255,.03)}
+.nav-item.active{color:var(--accent);border-left-color:var(--accent);background:var(--accent-soft)}
+.nav-item .ico{width:17px;text-align:center;font-size:14px}
+.sidebar .spacer{flex:1}
+.voice-widget{margin:8px 10px;padding:12px;border:1px solid var(--line);border-radius:var(--panel-radius);background:var(--surface-2)}
+.voice-widget .row{display:flex;align-items:center;gap:9px;font-size:11px;color:var(--muted-2)}
+.mic-pulse{width:10px;height:10px;border-radius:50%;background:var(--muted);flex:none}
+body.listening .mic-pulse{background:var(--mint);box-shadow:0 0 10px var(--mint);animation:blink .8s infinite}
+body.listening .voice-widget{border-color:rgba(63,224,189,.5)}
+.focus-btn{margin:10px;padding:10px;border-radius:var(--panel-radius);border:1px solid var(--line-strong);background:transparent;color:var(--muted-2);font-size:11.5px;letter-spacing:.1em;font-weight:600;cursor:pointer;text-transform:uppercase;transition:.2s}
+.focus-btn:hover,.focus-btn.on{color:var(--bg);background:var(--accent);border-color:var(--accent)}
+
+/* ---------- MAIN ---------- */
+.main{grid-row:2/3;grid-column:2;overflow:auto;padding:18px;display:flex;flex-direction:column;gap:16px;scroll-behavior:smooth}
+.view{display:none;flex-direction:column;gap:16px;animation:fadeUp .35s ease}
+.view.active{display:flex}
+@keyframes fadeUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+.panel{border:1px solid var(--line);border-radius:var(--panel-radius);background:var(--surface);backdrop-filter:blur(6px);overflow:hidden}
+.panel-head{display:flex;align-items:center;gap:8px;padding:11px 14px;border-bottom:1px solid var(--line);font-size:10.5px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:var(--muted-2)}
+.panel-head .live{margin-left:auto;display:flex;align-items:center;gap:6px;color:var(--mint);font-size:10px}
+.panel-head .live .dot{width:6px;height:6px;border-radius:50%;background:var(--mint);animation:blink 1.6s infinite}
+.panel-head .tools-mini{margin-left:auto;display:flex;gap:6px}
+.mini-btn{border:1px solid var(--line);background:transparent;color:var(--muted-2);border-radius:7px;padding:3px 8px;font-size:10px;cursor:pointer}
+.mini-btn:hover{color:var(--accent);border-color:var(--line-strong)}
+.grid-cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
+.stat-card{border:1px solid var(--line);border-radius:var(--panel-radius);padding:12px 13px;background:var(--surface-2);position:relative;transition:.2s;cursor:default}
+.stat-card:hover{border-color:var(--line-strong);transform:translateY(-2px)}
+.stat-card .lbl{font-size:9.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);font-weight:600}
+.stat-card .val{font-size:15.5px;font-weight:700;margin-top:6px;color:var(--text)}
+.stat-card .val small{font-size:11px;color:var(--muted-2);font-weight:500}
+.stat-card .ico{position:absolute;top:11px;right:11px;font-size:13px;opacity:.8}
+.stat-card.ok .val{color:var(--mint)}
+.stat-card.warn .val{color:var(--amber)}
+
+/* HERO */
+.hero{position:relative;min-height:340px;border:1px solid var(--line);border-radius:16px;background:radial-gradient(600px 300px at 50% 45%,var(--accent-soft),transparent 70%),var(--bg-2);display:flex;align-items:center;justify-content:center;overflow:hidden}
+#orbCanvas{position:absolute;inset:0;width:100%;height:100%}
+.hero-core{position:relative;z-index:2;text-align:center;pointer-events:none}
+.hero-core .jarvis{font-size:clamp(34px,6vw,52px);font-weight:800;letter-spacing:.34em;text-indent:.34em;animation:glow 3s ease-in-out infinite}
+@keyframes glow{0%,100%{text-shadow:0 0 18px var(--accent),0 0 60px transparent}50%{text-shadow:0 0 30px var(--accent),0 0 90px var(--accent-soft)}}
+.hero-core .sub{font-size:11px;letter-spacing:.5em;text-indent:.5em;color:var(--muted-2);margin-top:6px;font-weight:600}
+.hero-core .ver{font-size:10px;color:var(--muted);margin-top:4px;font-family:var(--mono)}
+.hero-badges{position:absolute;font-size:9.5px;letter-spacing:.14em;color:var(--muted);z-index:3;text-transform:uppercase}
+.hb-tl{top:14px;left:16px}.hb-tr{top:14px;right:16px;color:var(--mint)}
+.hb-bl{bottom:14px;left:16px}.hb-br{bottom:14px;right:16px}
+.hero-metrics{position:absolute;bottom:44px;right:16px;z-index:3;font-family:var(--mono);font-size:10px;color:var(--muted-2);text-align:right;line-height:1.7}
+.hero-metrics b{color:var(--accent)}
+
+/* ORB STATE */
+.core-state{display:inline-flex;align-items:center;gap:8px;margin-top:14px;font-size:10px;letter-spacing:.22em;text-transform:uppercase;color:var(--muted-2)}
+.core-state .s-dot{width:8px;height:8px;border-radius:50%;background:var(--accent);box-shadow:0 0 10px var(--accent);transition:.4s}
+body.listening .core-state .s-dot{background:var(--mint);box-shadow:0 0 10px var(--mint)}
+body.speaking .core-state .s-dot{background:var(--violet);box-shadow:0 0 10px var(--violet)}
+body.thinking .core-state .s-dot{background:var(--amber);box-shadow:0 0 10px var(--amber)}
+
+/* AGENTS */
+.agents-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:10px;padding:12px}
+.agent-card{border:1px solid var(--line);border-radius:11px;padding:12px;background:var(--surface-2);transition:.2s}
+.agent-card:hover{border-color:var(--line-strong)}
+.agent-card .top{display:flex;align-items:center;gap:9px}
+.agent-card .av{width:30px;height:30px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:14px;background:var(--accent-soft);border:1px solid var(--line-strong)}
+.agent-card .nm{font-size:12.5px;font-weight:600}
+.agent-card .rl{font-size:10px;color:var(--muted)}
+.agent-card .st{margin-top:9px;font-size:10px;display:flex;align-items:center;gap:6px;color:var(--muted-2)}
+.agent-card .st .dot{width:6px;height:6px;border-radius:50%}
+.st.on .dot{background:var(--mint);box-shadow:0 0 8px var(--mint)}
+.st.off .dot{background:var(--muted)}
+.agent-card a{display:block;margin-top:9px;font-size:10.5px;color:var(--accent);text-decoration:none}
+
+/* MONITOR */
+.monitor-row{display:flex;flex-wrap:wrap;gap:14px;padding:16px;justify-content:center}
+.gauge{display:flex;flex-direction:column;align-items:center;gap:8px}
+.gauge svg{transform:rotate(-90deg)}
+.gauge .track{fill:none;stroke:var(--line);stroke-width:8}
+.gauge .fill{fill:none;stroke:var(--accent);stroke-width:8;stroke-linecap:round;transition:stroke-dashoffset .8s ease,stroke .6s}
+.gauge .pct{font-family:var(--mono);font-size:13px;margin-top:-64px}
+.gauge .g-lbl{font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted-2)}
+
+/* WIDGETS */
+.wgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:12px}
+.widget{border:1px solid var(--line);border-radius:var(--panel-radius);background:var(--surface-2);padding:13px;position:relative;transition:.25s;cursor:grab}
+.widget.dragging{opacity:.4;cursor:grabbing}
+.widget .w-head{display:flex;align-items:center;gap:8px;font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted-2);font-weight:700;margin-bottom:10px}
+.widget .w-head .w-tools{margin-left:auto;display:flex;gap:5px;opacity:0;transition:.2s}
+.widget:hover .w-tools{opacity:1}
+.w-val{font-size:22px;font-weight:800}
+.w-sub{font-size:11px;color:var(--muted);margin-top:4px;line-height:1.5}
+.w-actions{margin-top:8px;display:flex;gap:6px}
+.w-actions input,.w-actions select{background:var(--surface-3);border:1px solid var(--line);color:var(--text);border-radius:7px;padding:5px 8px;font-size:11px;outline:none;min-width:0;flex:1}
+.w-actions button{background:var(--accent-soft);border:1px solid var(--line-strong);color:var(--accent);border-radius:7px;padding:5px 10px;font-size:11px;cursor:pointer}
+.task-item{display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px dashed var(--line);font-size:12px}
+.task-item:last-child{border:none}
+.task-item input[type=checkbox]{accent-color:var(--accent)}
+.task-item.done span{text-decoration:line-through;color:var(--muted)}
+.task-item .del{margin-left:auto;color:var(--muted);cursor:pointer;font-size:12px}
+.task-item .del:hover{color:var(--rose)}
+.spark{display:flex;align-items:flex-end;gap:3px;height:36px;margin-top:8px}
+.spark i{flex:1;background:var(--accent);border-radius:2px 2px 0 0;opacity:.75;min-height:2px;transition:height .4s}
+
+/* FEED */
+.feed{padding:6px 0}
+.feed-item{display:flex;gap:11px;padding:10px 14px;border-bottom:1px solid rgba(94,157,191,.08);align-items:flex-start}
+.feed-item:last-child{border:none}
+.feed-item .fi{width:28px;height:28px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:12px;flex:none;background:var(--surface-3);border:1px solid var(--line)}
+.feed-item .body{min-width:0;flex:1}
+.feed-item .txt{font-size:12.5px;line-height:1.45}
+.feed-item .meta{font-size:10px;color:var(--muted);margin-top:3px;display:flex;gap:8px;align-items:center}
+.badge{font-size:8.5px;font-weight:700;letter-spacing:.1em;padding:2px 7px;border-radius:5px;text-transform:uppercase}
+.b-info{background:rgba(74,175,255,.15);color:var(--blue)}
+.b-warn{background:rgba(240,198,108,.15);color:var(--amber)}
+.b-tip{background:rgba(194,138,255,.15);color:var(--violet)}
+.b-live{background:rgba(63,224,189,.15);color:var(--mint)}
+
+/* TIMELINE */
+.tl-item{padding:10px 14px;border-bottom:1px solid rgba(94,157,191,.08)}
+.tl-item:last-child{border:none}
+.tl-item .t{display:flex;justify-content:space-between;font-size:11.5px;margin-bottom:6px}
+.tl-item .t b{font-weight:600}
+.tl-item .t span{color:var(--muted);font-family:var(--mono);font-size:10px}
+.bar{height:5px;border-radius:5px;background:var(--line);overflow:hidden}
+.bar i{display:block;height:100%;background:linear-gradient(90deg,var(--cyan-2),var(--accent));border-radius:5px;transition:width .8s ease}
+
+/* QUICK CMDS */
+.quick-grid{display:grid;grid-template-columns:1fr 1fr;gap:9px;padding:12px}
+.quick-btn{border:1px solid var(--line-strong);background:var(--accent-soft);color:var(--accent);border-radius:10px;padding:11px 8px;font-size:11.5px;font-weight:600;letter-spacing:.06em;cursor:pointer;transition:.2s;text-transform:uppercase}
+.quick-btn:hover{filter:brightness(1.2);transform:translateY(-1px)}
+
+/* FOOTER */
+.footer{grid-column:1/3;display:flex;align-items:center;gap:14px;padding:0 18px;border-top:1px solid var(--line);background:linear-gradient(0deg,rgba(9,28,45,.8),rgba(6,22,38,.5));backdrop-filter:blur(8px);z-index:40}
+.foot-info{font-size:10px;color:var(--muted);display:flex;gap:12px;white-space:nowrap;overflow:hidden}
+.foot-info b{color:var(--muted-2);font-weight:600}
+.talk{flex:0 1 480px;min-width:180px;position:relative;display:flex;align-items:center;justify-content:center;gap:10px;padding:12px 26px;border-radius:99px;border:1px solid var(--line-strong);background:var(--accent-soft);color:var(--accent);font-weight:700;letter-spacing:.14em;font-size:11.5px;cursor:pointer;transition:.25s;text-transform:uppercase;user-select:none}
+.talk:hover{box-shadow:0 0 24px var(--accent-soft)}
+body.listening .talk{border-color:var(--mint);color:var(--mint);box-shadow:0 0 28px rgba(63,224,189,.25)}
+.wave{display:flex;align-items:center;gap:2.5px;height:16px}
+.wave i{width:3px;border-radius:2px;background:currentColor;height:4px;transition:height .12s ease;min-height:2px}
+.briefing{border:1px solid var(--line-strong);border-radius:99px;background:transparent;color:var(--muted-2);padding:11px 18px;font-size:10.5px;letter-spacing:.12em;font-weight:700;cursor:pointer;text-transform:uppercase;white-space:nowrap}
+.briefing:hover{color:var(--accent);border-color:var(--accent)}
+
+/* MODALS */
+.scrim{position:fixed;inset:0;background:rgba(2,8,14,.7);backdrop-filter:blur(3px);z-index:90;display:none;align-items:center;justify-content:center;padding:18px}
+.scrim.open{display:flex}
+.modal{width:min(680px,100%);max-height:86vh;overflow:auto;background:var(--bg-2);border:1px solid var(--line-strong);border-radius:14px;animation:fadeUp .25s ease}
+.modal .m-head{display:flex;align-items:center;gap:10px;padding:14px 16px;border-bottom:1px solid var(--line);font-size:12px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;position:sticky;top:0;background:var(--bg-2);z-index:2}
+.modal .m-head .x{margin-left:auto;cursor:pointer;color:var(--muted);font-size:16px}
+.modal .m-body{padding:16px}
+.fld{margin-bottom:13px}
+.fld label{display:block;font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin-bottom:5px;font-weight:700}
+.fld input,.fld select,.fld textarea{width:100%;background:var(--surface-2);border:1px solid var(--line);border-radius:9px;color:var(--text);padding:9px 11px;font-size:12.5px;outline:none;font-family:inherit}
+.fld input:focus,.fld textarea:focus,.fld select:focus{border-color:var(--accent)}
+.btn{background:var(--accent);color:var(--bg);border:none;border-radius:9px;padding:10px 16px;font-size:12px;font-weight:700;cursor:pointer;letter-spacing:.04em}
+.btn.ghost{background:transparent;border:1px solid var(--line-strong);color:var(--muted-2)}
+.btn:hover{filter:brightness(1.1)}
+
+/* PALETTE */
+.palette-box{width:min(560px,100%);background:var(--bg-2);border:1px solid var(--line-strong);border-radius:14px;overflow:hidden;align-self:flex-start;margin-top:8vh}
+.palette-box input{width:100%;background:transparent;border:none;outline:none;color:var(--text);padding:16px;font-size:15px;border-bottom:1px solid var(--line)}
+.pal-list{max-height:330px;overflow:auto}
+.pal-item{display:flex;align-items:center;gap:11px;padding:11px 16px;cursor:pointer;font-size:12.5px}
+.pal-item:hover,.pal-item.sel{background:var(--accent-soft)}
+.pal-item .k{margin-left:auto;font-family:var(--mono);font-size:9px;color:var(--muted)}
+
+/* TOOLS modal content */
+.tool-run{display:flex;gap:8px;margin-top:8px}
+.tool-run textarea,.tool-out{width:100%;background:var(--surface-2);border:1px solid var(--line);border-radius:9px;color:var(--text);padding:10px;font-size:12px;font-family:var(--mono);outline:none;min-height:70px;resize:vertical}
+.tool-out{min-height:60px;color:var(--mint);white-space:pre-wrap;word-break:break-word}
+.tool-grid-cols{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+@media(max-width:640px){.tool-grid-cols{grid-template-columns:1fr}}
+
+/* TERMINAL */
+.term{background:#020a12;border-radius:11px;border:1px solid var(--line);overflow:hidden;display:flex;flex-direction:column;height:min(52vh,460px)}
+.term-out{flex:1;overflow:auto;padding:12px;font-family:var(--mono);font-size:11.5px;line-height:1.65;white-space:pre-wrap;word-break:break-word}
+.term-out .t-in{color:var(--blue)}
+.term-out .t-ok{color:var(--mint)}
+.term-out .t-err{color:var(--rose)}
+.term-out .t-dim{color:var(--muted)}
+.term-in{display:flex;gap:8px;padding:9px 12px;border-top:1px solid var(--line);align-items:center}
+.term-in .ps{color:var(--accent);font-family:var(--mono);font-size:12px}
+.term-in input{flex:1;background:transparent;border:none;outline:none;color:var(--text);font-family:var(--mono);font-size:12px}
+.term-tabs{display:flex;gap:7px;padding:9px 12px 0}
+.term-tab{border:1px solid var(--line);background:transparent;color:var(--muted-2);border-radius:8px 8px 0 0;padding:6px 13px;font-size:10.5px;cursor:pointer;letter-spacing:.08em}
+.term-tab.on{color:var(--accent);border-color:var(--line-strong);background:var(--accent-soft)}
+
+/* BROWSER */
+.browser-bar{display:flex;gap:8px;padding:10px 12px;border-bottom:1px solid var(--line)}
+.browser-bar input{flex:1;background:var(--surface-2);border:1px solid var(--line);border-radius:8px;color:var(--text);padding:8px 11px;font-size:12px;outline:none}
+#browserFrame{width:100%;height:min(60vh,520px);border:none;background:#fff}
+.browser-note{font-size:10px;color:var(--muted);padding:8px 12px;border-top:1px solid var(--line)}
+.quicklinks{display:flex;flex-wrap:wrap;gap:7px;padding:11px 12px}
+.qlink{border:1px solid var(--line);background:var(--surface-2);color:var(--muted-2);padding:6px 11px;border-radius:99px;font-size:11px;cursor:pointer}
+.qlink:hover{color:var(--accent);border-color:var(--line-strong)}
+
+/* MEMORY */
+.mem-row{display:flex;gap:9px;padding:9px 14px;border-bottom:1px solid rgba(94,157,191,.08);align-items:flex-start}
+.mem-row:last-child{border:none}
+.mem-row .cat{font-size:8.5px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;padding:3px 8px;border-radius:5px;background:var(--accent-soft);color:var(--accent);flex:none;margin-top:2px}
+.mem-row .txt{font-size:12px;flex:1;line-height:1.5}
+.mem-row .meta{font-size:9.5px;color:var(--muted);margin-top:3px;font-family:var(--mono)}
+.mem-row .del{color:var(--muted);cursor:pointer;font-size:11px}
+.mem-row .del:hover{color:var(--rose)}
+.mem-add{display:flex;gap:8px;padding:12px 14px;border-top:1px solid var(--line)}
+
+/* MARKETPLACE */
+.mk-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(215px,1fr));gap:11px;padding:13px}
+.mk-card{border:1px solid var(--line);border-radius:11px;padding:13px;background:var(--surface-2);transition:.2s;display:flex;flex-direction:column;gap:7px}
+.mk-card:hover{border-color:var(--line-strong);transform:translateY(-2px)}
+.mk-card .nm{font-size:13px;font-weight:700}
+.mk-card .ds{font-size:10.5px;color:var(--muted-2);line-height:1.5;flex:1}
+.mk-card a{font-size:10px;color:var(--accent);text-decoration:none;letter-spacing:.06em}
+.mk-tag{font-size:8.5px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--mint);display:flex;gap:5px;align-items:center}
+.mk-tag::before{content:"";width:5px;height:5px;border-radius:50%;background:currentColor}
+
+/* CHAT */
+.chat-wrap{display:flex;flex-direction:column;height:min(60vh,520px)}
+.chat-log{flex:1;overflow:auto;padding:14px;display:flex;flex-direction:column;gap:11px}
+.msg{max-width:78%;padding:10px 13px;border-radius:13px;font-size:12.5px;line-height:1.55;white-space:pre-wrap}
+.msg.user{align-self:flex-end;background:var(--accent-soft);border:1px solid var(--line-strong)}
+.msg.jarvis{align-self:flex-start;background:var(--surface-2);border:1px solid var(--line)}
+.msg .who{font-size:8.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);margin-bottom:5px;font-weight:700}
+.chat-in{display:flex;gap:9px;padding:11px;border-top:1px solid var(--line)}
+.chat-in input{flex:1;background:var(--surface-2);border:1px solid var(--line);border-radius:10px;color:var(--text);padding:10px 13px;font-size:12.5px;outline:none}
+.chat-in input:focus{border-color:var(--accent)}
+
+/* TOAST */
+.toast{position:fixed;bottom:92px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--surface-3);border:1px solid var(--line-strong);color:var(--text);padding:10px 18px;border-radius:10px;font-size:12px;z-index:120;opacity:0;transition:.3s;pointer-events:none;max-width:90vw}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+/* SCANNER LINE */
+.scanline{position:absolute;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,var(--accent),transparent);opacity:.35;animation:scan 7s linear infinite;z-index:1}
+@keyframes scan{0%{top:0}100%{top:100%}}
+
+@media(max-width:880px){
+  #app{grid-template-columns:0 1fr}
+  #app.nav-hidden{grid-template-columns:200px 1fr}
+  .hero-metrics,.hb-bl{display:none}
+}
+</style>
+</head>
+<body data-theme="nebula">
+<div id="app">
+
+  <!-- TOPBAR -->
+  <header class="topbar">
+    <button class="icon-btn" id="menuButton" title="Menu">☰</button>
+    <div class="brand"><span class="logo"></span> JARVIS · COMMAND CENTER</div>
+    <span class="sys-ok" id="sysStatus"><span class="dot"></span> System Status: <b style="color:var(--mint)">Optimal</b></span>
+    <div class="top-right">
+      <div class="search-wrap"><span class="k">⌕</span><input id="globalSearch" placeholder="Buscar ferramenta, widget, comando… (Ctrl+K)" /></div>
+      <span class="chip">🕐 <b id="clockLabel">--:--</b></span>
+      <span class="chip"><b id="dateLabel">--</b></span>
+      <button class="icon-btn" id="themeButton" title="Trocar tema">🎨</button>
+      <button class="icon-btn" id="settingsButton" title="Configurações / LLM">⚙</button>
+      <button class="icon-btn" id="operatorButton" title="Operador">👤</button>
+    </div>
+  </header>
+
+  <!-- SIDEBAR -->
+  <nav class="sidebar">
+    <div class="nav-item active" data-view="home"><span class="ico">◈</span> Command Center</div>
+    <div class="nav-item" data-view="agents"><span class="ico">◆</span> Agents</div>
+    <div class="nav-item" data-view="widgets"><span class="ico">▦</span> Widgets</div>
+    <div class="nav-item" data-view="chat"><span class="ico">◉</span> AI Core</div>
+    <div class="nav-item" data-view="memory"><span class="ico">◍</span> Memory</div>
+    <div class="nav-item" data-view="terminal"><span class="ico">▤</span> Cloud Terminal</div>
+    <div class="nav-item" data-view="browser"><span class="ico">⬉</span> Browser</div>
+    <div class="nav-item" data-view="tools"><span class="ico">⚒</span> Ferramentas</div>
+    <div class="nav-item" data-view="marketplace"><span class="ico">✦</span> Open Source</div>
+    <div class="nav-item" data-view="tasks"><span class="ico">☑</span> Tasks</div>
+    <div class="nav-item" data-view="calendar"><span class="ico">▦</span> Calendar</div>
+    <div class="spacer"></div>
+    <div class="voice-widget" id="voiceWidget">
+      <div class="row"><span class="mic-pulse"></span> <span id="voiceState">Voice: <b>Standby</b></span></div>
+      <div class="row" style="margin-top:7px;justify-content:center"><div class="wave" id="sidebarWave"></div></div>
+    </div>
+    <button class="focus-btn" id="focusButton">Focus Mode</button>
+  </nav>
+
+  <!-- MAIN -->
+  <main class="main">
+
+    <!-- HOME -->
+    <section class="view active" id="view-home">
+      <div class="hero">
+        <canvas id="orbCanvas"></canvas>
+        <div class="scanline"></div>
+        <span class="hero-badges hb-tl">Primary Intelligence System</span>
+        <span class="hero-badges hb-tr" id="coreBadge">● Core Online</span>
+        <span class="hero-badges hb-bl">Neural System</span>
+        <span class="hero-badges hb-br">Active</span>
+        <div class="hero-metrics">
+          LATENCY <b id="latLabel">-- ms</b><br/>
+          SESSION <b id="sessionLabel">00:00:00</b><br/>
+          MODEL <b id="modelLabel">local</b>
+        </div>
+        <div class="hero-core">
+          <div class="jarvis">JARVIS</div>
+          <div class="sub">AI CORE</div>
+          <div class="ver">v4.0.0 · open core</div>
+          <div class="core-state"><span class="s-dot"></span> <span id="coreState">idle</span></div>
+        </div>
+      </div>
+
+      <div class="grid-cards" id="coreOverview">
+        <div class="stat-card ok" data-open="chat"><span class="ico">◉</span><div class="lbl">AI Core</div><div class="val" id="stCore">Active</div></div>
+        <div class="stat-card" data-open="memory"><span class="ico">◍</span><div class="lbl">Memory</div><div class="val" id="stMemory">0 <small>stored</small></div></div>
+        <div class="stat-card" data-open="home"><span class="ico">🎙</span><div class="lbl">Voice</div><div class="val" id="stVoice">Standby</div></div>
+        <div class="stat-card" data-open="agents"><span class="ico">◆</span><div class="lbl">Agents</div><div class="val" id="stAgents">3 <small>diretório</small></div></div>
+        <div class="stat-card" data-open="chat"><span class="ico">⧉</span><div class="lbl">LLMs</div><div class="val" id="stLLMs">0 <small>config.</small></div></div>
+        <div class="stat-card ok" data-open="widgets"><span class="ico">▦</span><div class="lbl">System</div><div class="val" id="stSystem">Optimal</div></div>
+      </div>
+
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:16px">
+        <div class="panel">
+          <div class="panel-head">System Monitor <span class="live"><span class="dot"></span> real-time</span></div>
+          <div class="monitor-row" id="gauges"></div>
+        </div>
+        <div class="panel">
+          <div class="panel-head">Live Intelligence Feed
+            <span class="tools-mini"><button class="mini-btn" data-open="tasks">+ evento</button></span>
+          </div>
+          <div class="feed" id="feed"><div class="feed-item"><span class="fi">◌</span><span class="body"><span class="txt" style="color:var(--muted)">Carregando feed real…</span></span></div></div>
+        </div>
+      </div>
+
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:16px">
+        <div class="panel">
+          <div class="panel-head">Mission Timeline</div>
+          <div id="timeline"></div>
+        </div>
+        <div class="panel">
+          <div class="panel-head">Quick Commands</div>
+          <div class="quick-grid">
+            <button class="quick-btn" id="qcTask">✚ Start New Task</button>
+            <button class="quick-btn" data-open="calendar">▦ Open Calendar</button>
+            <button class="quick-btn" id="qcVoice">🎙 Start Voice Chat</button>
+            <button class="quick-btn" data-open="terminal">▤ Run Workflow</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- AGENTS -->
+    <section class="view" id="view-agents">
+      <div class="panel">
+        <div class="panel-head">Active Agents <span class="live"><span class="dot"></span> ecossistema</span></div>
+        <div class="agents-grid" id="agentsGrid"></div>
+      </div>
+      <div class="panel">
+        <div class="panel-head">Canais de coordenação</div>
+        <div class="mk-grid" id="channelsGrid"></div>
+      </div>
+    </section>
+
+    <!-- WIDGETS -->
+    <section class="view" id="view-widgets">
+      <div class="panel">
+        <div class="panel-head">Widgets em tempo real <span class="tools-mini">
+          <button class="mini-btn" id="wAdd">+ widget</button>
+          <button class="mini-btn" id="wReset">↺ restaurar</button></span>
+        </div>
+      </div>
+      <div class="wgrid" id="widgetGrid"></div>
+    </section>
+
+    <!-- CHAT -->
+    <section class="view" id="view-chat">
+      <div class="panel">
+        <div class="panel-head">AI Core — Chat <span class="live" id="llmBadge"><span class="dot"></span> <b>modo local</b></span></div>
+        <div class="chat-wrap">
+          <div class="chat-log" id="chatLog"></div>
+          <div class="chat-in">
+            <input id="chatInput" placeholder="Fale com o JARVIS… (Enter para enviar)" autocomplete="off" />
+            <button class="btn" id="chatSend">Enviar</button>
+          </div>
+        </div>
+      </div>
+      <div class="panel">
+        <div class="panel-head">LLM Status — provedores <span class="tools-mini"><button class="mini-btn" id="llmCfg">⚙ configurar</button></span></div>
+        <div class="agents-grid" id="llmGrid"></div>
+      </div>
+    </section>
+
+    <!-- MEMORY -->
+    <section class="view" id="view-memory">
+      <div class="grid-cards" style="margin-bottom:2px">
+        <div class="stat-card"><span class="ico">◍</span><div class="lbl">Memories</div><div class="val" id="memCount">0</div></div>
+        <div class="stat-card"><span class="ico">✦</span><div class="lbl">Recall</div><div class="val" id="memLast">—</div></div>
+      </div>
+      <div class="panel">
+        <div class="panel-head">Memory Bank <span class="tools-mini">
+          <button class="mini-btn" id="memExport">⇩ exportar</button>
+          <button class="mini-btn" id="memImport">⇧ importar</button></span>
+        </div>
+        <div id="memList"></div>
+        <div class="mem-add">
+          <input id="memInput" placeholder="Ensinar algo ao JARVIS… ex: 'meu nome é Nicolas'" style="flex:1;background:var(--surface-2);border:1px solid var(--line);border-radius:9px;color:var(--text);padding:10px 12px;font-size:12.5px;outline:none" />
+          <button class="btn" id="memAdd">Memorizar</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- TERMINAL -->
+    <section class="view" id="view-terminal">
+      <div class="panel">
+        <div class="panel-head">Cloud Terminal — execução real
+          <span class="tools-mini" id="termStatus">carregando engine…</span>
+        </div>
+        <div class="term-tabs">
+          <button class="term-tab on" data-term="py">Python (Pyodide · real)</button>
+          <button class="term-tab" data-term="js">JavaScript (real)</button>
+          <button class="term-tab" data-term="sys">JARVIS shell</button>
+        </div>
+        <div class="term">
+          <div class="term-out" id="termOut"></div>
+          <div class="term-in"><span class="ps" id="termPs">py ›</span><input id="termInput" placeholder="digite o comando e pressione Enter — /help para ajuda" autocomplete="off" /></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- BROWSER -->
+    <section class="view" id="view-browser">
+      <div class="panel">
+        <div class="panel-head">Browser integrado</div>
+        <div class="browser-bar">
+          <input id="browserUrl" placeholder="https://…" value="https://www.openstreetmap.org/export/embed.html?bbox=-46.75,-23.68,-46.52,-23.48&amp;layer=mapnik" />
+          <button class="btn" id="browserGo">Ir</button>
+        </div>
+        <div class="quicklinks" id="browserLinks"></div>
+        <iframe id="browserFrame" src="https://www.openstreetmap.org/export/embed.html?bbox=-46.75,-23.68,-46.52,-23.48&layer=mapnik" referrerpolicy="no-referrer"></iframe>
+        <div class="browser-note">Nota honesta: sites que enviam cabeçalho <code>X-Frame-Options</code> (Google, GitHub, etc.) não podem ser embutidos — o navegador os bloqueia. Use os links rápidos que funcionam em iframe.</div>
+      </div>
+    </section>
+
+    <!-- TOOLS -->
+    <section class="view" id="view-tools">
+      <div class="panel">
+        <div class="panel-head">Ferramentas & Plugins <span class="live"><span class="dot"></span> 26 módulos reais</span></div>
+        <div class="mk-grid" id="toolsGrid"></div>
+      </div>
+    </section>
+
+    <!-- MARKETPLACE / OPEN SOURCE -->
+    <section class="view" id="view-marketplace">
+      <div class="panel">
+        <div class="panel-head">Galáxia Open Source — agentes & automação <span class="live"><span class="dot"></span> free & open</span></div>
+        <div class="mk-grid" id="marketGrid"></div>
+      </div>
+    </section>
+
+    <!-- TASKS -->
+    <section class="view" id="view-tasks">
+      <div class="grid-cards" style="margin-bottom:2px">
+        <div class="stat-card"><div class="lbl">Tarefas abertas</div><div class="val" id="taskOpen">0</div></div>
+        <div class="stat-card ok"><div class="lbl">Concluídas hoje</div><div class="val" id="taskDone">0</div></div>
+        <div class="stat-card"><div class="lbl">Atrasadas</div><div class="val" id="taskLate">0</div></div>
+      </div>
+      <div class="panel">
+        <div class="panel-head">Task Board</div>
+        <div class="mem-add"><input id="taskInput" placeholder="Nova tarefa… (Enter)" style="flex:1;background:var(--surface-2);border:1px solid var(--line);border-radius:9px;color:var(--text);padding:10px 12px;font-size:12.5px;outline:none" /><button class="btn" id="taskAdd">Adicionar</button></div>
+        <div id="taskList"></div>
+      </div>
+    </section>
+
+    <!-- CALENDAR -->
+    <section class="view" id="view-calendar">
+      <div class="panel">
+        <div class="panel-head">Calendar <span class="tools-mini"><button class="mini-btn" id="evtRefresh">↺</button></span></div>
+        <div class="mem-add"><input id="evtTitle" placeholder="Evento…" style="flex:2" /><input id="evtDate" type="datetime-local" style="flex:2" /><button class="btn" id="evtAdd">Agendar</button></div>
+        <div id="evtList"></div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- FOOTER -->
+  <footer class="footer">
+    <div class="foot-info"><span>📍 <b id="locLabel">localizando…</b></span> <span>🌐 <b id="netLabel">--</b></span></div>
+    <button class="talk" id="talkButton">
+      <div class="wave" id="footWave"></div>
+      <span id="talkLabel">Talk to Jarvis</span>
+      <div class="wave" id="footWave2"></div>
+    </button>
+    <button class="briefing" id="briefingButton">✦ Executive Briefing</button>
+  </footer>
+</div>
+
+<!-- MODAL GENÉRICO -->
+<div class="scrim" id="modalScrim">
+  <div class="modal">
+    <div class="m-head"><span id="modalTitle">Modal</span><span class="x" id="modalClose">✕</span></div>
+    <div class="m-body" id="modalBody"></div>
+  </div>
+</div>
+
+<!-- COMMAND PALETTE -->
+<div class="scrim" id="palScrim" style="justify-content:flex-start">
+  <div class="palette-box">
+    <input id="palInput" placeholder="Digite um comando ou ferramenta…" />
+    <div class="pal-list" id="palList"></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+<script>
+"use strict";
+/* =====================================================================
+   JARVIS Command Center v4.0.0 — núcleo
+   Filosofia: real ou não existe. Nada de número inventado: sem rede,
+   o widget mostra o estado real (offline) em vez de simular dados.
+   ===================================================================== */
+
+const $ = (s) => document.querySelector(s);
+const $$ = (s) => [...document.querySelectorAll(s)];
+const store = {
+  get(k, d) { try { const v = localStorage.getItem("jcc:" + k); return v === null ? d : JSON.parse(v); } catch { return d; } },
+  set(k, v) { try { localStorage.setItem("jcc:" + k, JSON.stringify(v)); } catch {} },
+};
+
+function toast(msg, ms = 2400) {
+  const t = $("#toast"); t.textContent = msg; t.classList.add("show");
+  clearTimeout(toast._h); toast._h = setTimeout(() => t.classList.remove("show"), ms);
+}
+function esc(s) { return String(s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c])); }
+
+/* ---------------- THEMES (contextuais, transição fluida) ---------------- */
+const THEMES = ["nebula", "ultron", "matrix", "violet", "amanhecer"];
+function setTheme(name, announce) {
+  document.body.dataset.theme = name;
+  store.set("theme", name);
+  if (announce) toast("Tema: " + name);
+}
+function cycleTheme() {
+  const cur = document.body.dataset.theme || "nebula";
+  const next = THEMES[(THEMES.indexOf(cur) + 1) % THEMES.length];
+  setTheme(next, true);
+}
+function autoThemeByTime() {
+  const h = new Date().getHours();
+  const auto = store.get("themeAuto", true);
+  if (!auto) return;
+  if (h >= 6 && h < 18) { if (["nebula"].includes(document.body.dataset.theme)) setTheme("amanhecer", false); }
+}
+
+/* ---------------- ORB — canvas animado, reage a voz e estado ---------------- */
+const Orb = (() => {
+  let cv, ctx, W, H, t = 0, amp = 0, targetAmp = 0;
+  let stateColor = { r: 82, g: 231, b: 244 }; // cyan
+  const STATES = {
+    idle:     [82, 231, 244],
+    listening:[63, 224, 189],
+    thinking: [240, 198, 108],
+    speaking: [194, 138, 255],
+  };
+  const particles = Array.from({ length: 26 }, () => ({
+    r: 60 + Math.random() * 90, a: Math.random() * Math.PI * 2,
+    sp: (0.15 + Math.random() * 0.5) * (Math.random() > .5 ? 1 : -1),
+    s: 0.8 + Math.random() * 1.6,
+  }));
+  function resize() { W = cv.width = cv.offsetWidth * devicePixelRatio; H = cv.height = cv.offsetHeight * devicePixelRatio; }
+  function setAudio(a) { targetAmp = a; }
+  function setState(s) {
+    const c = STATES[s] || STATES.idle;
+    stateColor = { r: c[0], g: c[1], b: c[2] };
+  }
+  function frame() {
+    t += 0.008; amp += (targetAmp - amp) * 0.12;
+    const col = stateColor, cx = W / 2, cy = H * 0.48;
+    ctx.clearRect(0, 0, W, H);
+    const orbR = Math.min(W, H) * 0.16 * (1 + amp * 0.12);
+    // halo
+    let g = ctx.createRadialGradient(cx, cy, 0, cx, cy, orbR * 2.4);
+    g.addColorStop(0, `rgba(${col.r},${col.g},${col.b},${0.16 + amp * 0.2})`);
+    g.addColorStop(1, "transparent");
+    ctx.fillStyle = g; ctx.beginPath(); ctx.arc(cx, cy, orbR * 2.4, 0, 7); ctx.fill();
+    // anéis orbitais elípticos
+    for (let i = 0; i < 4; i++) {
+      const rr = orbR * (1.55 + i * 0.42);
+      ctx.save(); ctx.translate(cx, cy); ctx.rotate(t * (0.3 + i * 0.22) + i);
+      ctx.beginPath();
+      ctx.ellipse(0, 0, rr, rr * 0.36, 0, 0, Math.PI * 2);
+      ctx.setLineDash(i % 2 ? [4, 10] : []);
+      ctx.strokeStyle = `rgba(${col.r},${col.g},${col.b},${0.30 - i * 0.05})`;
+      ctx.lineWidth = 1.1; ctx.stroke(); ctx.restore();
+    }
+    // partículas orbitando
+    for (const p of particles) {
+      p.a += p.sp * 0.012 * (1 + amp * 2.2);
+      const px = cx + Math.cos(p.a) * p.r * (Math.min(W, H) / 260);
+      const py = cy + Math.sin(p.a) * p.r * 0.4 * (Math.min(W, H) / 260);
+      ctx.beginPath(); ctx.arc(px, py, p.s, 0, 7);
+      ctx.fillStyle = `rgba(${col.r},${col.g},${col.b},.55)`; ctx.fill();
+    }
+    // núcleo
+    g = ctx.createRadialGradient(cx - orbR * .3, cy - orbR * .3, 0, cx, cy, orbR);
+    g.addColorStop(0, `rgba(${col.r},${col.g},${col.b},.95)`);
+    g.addColorStop(.55, `rgba(${col.r},${col.g},${col.b},.25)`);
+    g.addColorStop(1, "rgba(4,16,27,.9)");
+    ctx.beginPath(); ctx.arc(cx, cy, orbR, 0, 7); ctx.fillStyle = g; ctx.fill();
+    ctx.strokeStyle = `rgba(${col.r},${col.g},${col.b},.8)`; ctx.lineWidth = 1.4; ctx.stroke();
+    // malha do núcleo
+    ctx.save(); ctx.beginPath(); ctx.arc(cx, cy, orbR, 0, 7); ctx.clip();
+    ctx.strokeStyle = `rgba(4,16,27,${0.35 + amp * 0.3})`;
+    for (let y = -orbR; y < orbR; y += 8) { ctx.beginPath(); ctx.moveTo(cx - orbR, cy + y + Math.sin(t * 3 + y) * 2); ctx.lineTo(cx + orbR, cy + y); ctx.lineWidth = .5; ctx.stroke(); }
+    ctx.restore();
+    requestAnimationFrame(frame);
+  }
+  return {
+    init(canvas) { cv = canvas; ctx = cv.getContext("2d"); resize(); addEventListener("resize", resize); requestAnimationFrame(frame); },
+    setAudio, setState,
+  };
+})();
+
+/* ---------------- VOZ — microfone REAL + síntese REAL ---------------- */
+const Voice = (() => {
+  let audioCtx, analyser, dataArr, micStream = null;
+  let rec = null, listening = false;
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+
+  async function startMic() {
+    if (micStream) return true;
+    try {
+      micStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      const src = audioCtx.createMediaStreamSource(micStream);
+      analyser = audioCtx.createAnalyser(); analyser.fftSize = 256;
+      dataArr = new Uint8Array(analyser.frequencyBinCount);
+      src.connect(analyser);
+      return true;
+    } catch (e) {
+      toast("Microfone bloqueado pelo navegador — permita o acesso para a voz funcionar.");
+      return false;
+    }
+  }
+  function level() {
+    if (!analyser) return 0;
+    analyser.getByteFrequencyData(dataArr);
+    let s = 0; for (let i = 0; i < dataArr.length; i++) s += dataArr[i];
+    return Math.min(1, (s / dataArr.length) / 90);
+  }
+  function speak(text) {
+    if (!("speechSynthesis" in window)) { toast("Síntese de voz não suportada neste navegador."); return; }
+    window.speechSynthesis.cancel();
+    const u = new SpeechSynthesisUtterance(text);
+    u.lang = "pt-BR"; u.rate = 1.04; u.pitch = 0.92;
+    const v = pickVoice(); if (v) u.voice = v;
+    u.onstart = () => setSpeakUI(true); u.onend = () => setSpeakUI(false);
+    window.speechSynthesis.speak(u);
+  }
+  function pickVoice() {
+    const vs = window.speechSynthesis ? speechSynthesis.getVoices() : [];
+    return vs.find(v => /pt.BR/i.test(v.lang) && /google|luciana|francisca|natural/i.test(v.name))
+      || vs.find(v => /pt.BR/i.test(v.lang)) || vs.find(v => /pt/i.test(v.lang)) || null;
+  }
+  function setSpeakUI(on) { document.body.classList.toggle("speaking", on); setCoreState(on ? "speaking" : "idle"); $("#stVoice").textContent = on ? "Speaking" : "Standby"; }
+  async function toggle(onEnd) {
+    if (!SR) { toast("Reconhecimento de voz não suportado neste navegador (use Chrome/Edge)."); return; }
+    if (listening) { rec && rec.stop(); return; }
+    const micOk = await startMic();
+    if (!micOk) return;
+    rec = new SR(); rec.lang = "pt-BR"; rec.interimResults = true; rec.continuous = false;
+    let finalText = "";
+    rec.onstart = () => { listening = true; document.body.classList.add("listening"); setCoreState("listening"); $("#talkLabel").textContent = "Ouvindo…"; $("#stVoice").textContent = "Listening"; $("#voiceState").innerHTML = "Voice: <b style='color:var(--mint)'>Listening…</b>"; };
+    rec.onresult = (e) => {
+      let interim = "";
+      for (let i = e.resultIndex; i < e.results.length; i++) {
+        if (e.results[i].isFinal) finalText += e.results[i][0].transcript;
+        else interim += e.results[i][0].transcript;
+      }
+      if (interim) $("#talkLabel").textContent = interim.slice(0, 42);
+    };
+    rec.onerror = (e) => { if (e.error === "no-speech") toast("Não ouvi nada. Tente de novo."); else if (e.error !== "aborted") toast("Erro de voz: " + e.error); };
+    rec.onend = () => {
+      listening = false; document.body.classList.remove("listening");
+      setCoreState("idle"); $("#talkLabel").textContent = "Talk to Jarvis";
+      $("#voiceState").innerHTML = "Voice: <b>Standby</b>"; $("#stVoice").textContent = "Standby";
+      if (finalText.trim() && onEnd) onEnd(finalText.trim());
+    };
+    rec.start();
+  }
+  return { toggle, level, speak, stopSpeak() { window.speechSynthesis && speechSynthesis.cancel(); setSpeakUI(false); }, startMic };
+})();
+
+function setCoreState(s) {
+  $("#coreState").textContent = s;
+  document.body.classList.toggle("thinking", s === "thinking");
+  Orb.setState(s);
+}
+
+/* barras de onda reais (sidebar + footer) */
+function makeWave(el, bars = 7) {
+  el.innerHTML = Array.from({ length: bars }, () => "<i></i>").join("");
+  const kids = [...el.children];
+  return { set(level) { kids.forEach((k, i) => { const f = Math.sin(tick * 0.35 + i * 1.3) * 0.5 + 0.5; k.style.height = (3 + level * 30 * (0.35 + f * 0.65)) + "px"; }); } };
+}
+let tick = 0;
+setInterval(() => {
+  tick++;
+  const lv = document.body.classList.contains("listening") ? Voice.level() : 0.12;
+  if (window._wave1) _wave1.set(lv); if (window._wave2) _wave2.set(lv);
+}, 90);
+
+/* ---------------- MEMÓRIA LOCAL — com recall por similaridade ---------------- */
+const Memory = (() => {
+  function all() { return store.get("memories", []); }
+  function save(list) { store.set("memories", list); }
+  function add(text, cat) {
+    const m = { id: Date.now() + Math.random().toString(36).slice(2, 6), text, cat: cat || classify(text), at: new Date().toISOString() };
+    const list = all(); list.unshift(m); save(list); render(); return m;
+  }
+  function classify(text) {
+    const t = text.toLowerCase();
+    if (/(meu nome|me chamo|chamo-me|sou o|sou a)/.test(t)) return "identidade";
+    if (/(prefiro|gosto|não gosto|nao gosto|odeio|amo)/.test(t)) return "preferência";
+    if (/(lembre|lembra|anotar|anota|reunião|reuniao|prazo|entrega)/.test(t)) return "lembrete";
+    return "fato";
+  }
+  function tokens(s) { return (s || "").toLowerCase().split(/[^a-zà-ú0-9]+/).filter(w => w.length > 2); }
+  function recall(query) {
+    const q = new Set(tokens(query)); if (!q.size) return null;
+    let best = null, bestScore = 0;
+    for (const m of all()) {
+      const mt = new Set(tokens(m.text));
+      let inter = 0; for (const w of q) if (mt.has(w)) inter++;
+      const score = inter / (q.size + mt.size - inter);
+      if (score > bestScore) { bestScore = score; best = m; }
+    }
+    return bestScore >= 0.25 ? { m: best, score: bestScore } : null;
+  }
+  function remove(id) { save(all().filter(m => m.id !== id)); render(); }
+  function render() {
+    const list = all();
+    $("#memCount").textContent = list.length;
+    $("#stMemory").innerHTML = list.length + " <small>stored</small>";
+    const colors = { identidade: "var(--accent)", "preferência": "var(--violet)", lembrete: "var(--amber)", fato: "var(--mint)" };
+    $("#memList").innerHTML = list.map(m => `
+      <div class="mem-row">
+        <span class="cat" style="color:${colors[m.cat] || "var(--mint)"};background:transparent;border:1px solid var(--line)">${esc(m.cat)}</span>
+        <span class="txt">${esc(m.text)}</span>
+        <span class="meta">${new Date(m.at).toLocaleString("pt-BR")}</span>
+        <span class="del" data-del="${m.id}">✕</span>
+      </div>`).join("") || `<div style="padding:22px;text-align:center;color:var(--muted);font-size:12px">Memória vazia. Ensine algo ao JARVIS acima — ele lembra e usa nas respostas.</div>`;
+    $$("#memList [data-del]").forEach(b => b.onclick = () => remove(b.dataset.del));
+  }
+  return { add, recall, render, all };
+})();
+
+/* ---------------- CÉREBRO — roteador local + LLM opcional (chave do usuário) ---------------- */
+const Brain = (() => {
+  const cfg = () => store.get("llm", { provider: "none", key: "", model: "" });
+  const setCfg = (c) => store.set("llm", c);
+
+  const PROVIDERS = {
+    openrouter: {
+      label: "OpenRouter (modelos free)",
+      url: "https://openrouter.ai/api/v1/chat/completions",
+      models: ["meta-llama/llama-3.3-70b-instruct:free", "google/gemini-2.0-flash-exp:free", "qwen/qwen-2.5-72b-instruct:free", "mistralai/mistral-7b-instruct:free"],
+      headers: (k) => ({ "Authorization": "Bearer " + k, "X-Title": "JARVIS Command Center" }),
+    },
+    nvidia: {
+      label: "NVIDIA NIM",
+      url: "https://integrate.api.nvidia.com/v1/chat/completions",
+      models: ["meta/llama-3.1-70b-instruct", "nvidia/llama-3.1-nemotron-70b-instruct"],
+      headers: (k) => ({ "Authorization": "Bearer " + k }),
+    },
+    gemini: {
+      label: "Google Gemini (free tier)",
+      url: "", // montado no call
+      models: ["gemini-2.0-flash", "gemini-1.5-flash"],
+    },
+    groq: {
+      label: "Groq (free tier)",
+      url: "https://api.groq.com/openai/v1/chat/completions",
+      models: ["llama-3.3-70b-versatile", "llama-3.1-8b-instant"],
+      headers: (k) => ({ "Authorization": "Bearer " + k }),
+    },
+  };
+
+  async function callLLM(history) {
+    const c = cfg(); const p = PROVIDERS[c.provider];
+    if (!p || !c.key) throw new Error("LLM não configurado");
+    const sys = { role: "system", content: "Você é o JARVIS, assistente pessoal do Nicolas. Direto, técnico, em português do Brasil. Respostas curtas e úteis. Contexto de memória do usuário: " + Memory.all().slice(0, 8).map(m => m.text).join(" | ") };
+    if (c.provider === "gemini") {
+      const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${c.model}:generateContent?key=${encodeURIComponent(c.key)}`, {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ systemInstruction: { parts: [{ text: sys.content }] }, contents: history.map(h => ({ role: h.role === "assistant" ? "model" : "user", parts: [{ text: h.content }] })) }),
+      });
+      const j = await r.json();
+      if (!r.ok) throw new Error("Gemini: " + (j.error?.message || r.status));
+      return j.candidates?.[0]?.content?.parts?.[0]?.text || "(vazio)";
+    }
+    const r = await fetch(p.url, {
+      method: "POST", headers: { "Content-Type": "application/json", ...p.headers(c.key) },
+      body: JSON.stringify({ model: c.model, messages: [sys, ...history], max_tokens: 900, temperature: 0.7 }),
+    });
+    const j = await r.json();
+    if (!r.ok) throw new Error((j.error?.message || "HTTP " + r.status));
+    return j.choices?.[0]?.message?.content || "(vazio)";
+  }
+
+  /* comandos locais — 100% reais, sem rede */
+  function localCommand(text) {
+    const t = text.toLowerCase().trim();
+    const open = (v) => { $$(".nav-item").find(n => n.dataset.view === v)?.click(); return `Abrindo ${v}.`; };
+    if (/^(abrir|abra|abre)\s+(terminal|console)/.test(t)) return open("terminal");
+    if (/^(abrir|abra|abre)\s+(ferramentas?|plugins?|tools?)/.test(t)) return open("tools");
+    if (/^(abrir|abra|abre)\s+(browser|navegador)/.test(t)) return open("browser");
+    if (/^(abrir|abra|abre)\s+(mem(ó|o)ria)/.test(t)) return open("memory");
+    if (/^(abrir|abra|abre)\s+(calend(á|a)rio)/.test(t)) return open("calendar");
+    if (/^(abrir|abra|abre)\s+(tarefas?|tasks?)/.test(t)) return open("tasks");
+    if (/^(abrir|abra|abre)\s+(chat|n(ú|u)cleo|core)/.test(t)) return open("chat");
+    if (/tema\s+(nebula|ultron|matrix|violet|amanhecer)/.test(t)) {
+      const th = t.match(/tema\s+(nebula|ultron|matrix|violet|amanhecer)/)[1];
+      setTheme(th, true); return "Tema " + th + " aplicado.";
+    }
+    if (/trocar?\s+tema|^tema$/.test(t)) { cycleTheme(); return "Tema alterado."; }
+    if (/(que horas|hora agora|hor(á|a)rio)/.test(t)) return "Agora são " + new Date().toLocaleTimeString("pt-BR") + ".";
+    if (/(que dia|data de hoje|hoje é)/.test(t)) return "Hoje é " + new Date().toLocaleDateString("pt-BR", { weekday: "long", day: "numeric", month: "long", year: "numeric" }) + ".";
+    const memMatch = t.match(/^(?:lembre|lembra|memorize|memoriza|anota|anotar)\s+(?:que\s+|de\s+)?(.+)/);
+    if (memMatch) { Memory.add(memMatch[1]); return "Memorizado: " + memMatch[1]; }
+    const nameM = t.match(/(?:meu nome (?:é|e)|me chamo)\s+(.+)/);
+    if (nameM) { Memory.add("Nome do operador: " + nameM[1], "identidade"); return "Prazer, " + nameM[1] + ". Memorizado."; }
+    if (/^(focar|modo foco|focus)/.test(t)) { $("#focusButton").click(); return "Modo foco ativado."; }
+    if (/^(parar|pare|sil(ê|e)ncio|para de falar)/.test(t)) { Voice.stopSpeak(); return "Ok."; }
+    if (/^(ajuda|help|comandos)/.test(t)) return "Posso: abrir ferramentas/terminal/browser, trocar de tema, dizer as horas, memorizar fatos, focar. Com uma chave LLM configurada (⚙), respondo qualquer pergunta.";
+    const recall = Memory.recall(t);
+    if (recall) return "Da minha memória: " + recall.m.text;
+    return null;
+  }
+
+  async function respond(text, voice) {
+    const local = localCommand(text);
+    if (local !== null) { if (voice) Voice.speak(local); return local; }
+    const c = cfg();
+    if (!c.provider || c.provider === "none" || !c.key) {
+      const msg = "Sem LLM configurado. Clique em ⚙ e adicione sua chave (OpenRouter tem modelos gratuitos). Enquanto isso, funcionam meus comandos locais — diga 'ajuda'.";
+      if (voice) Voice.speak("Sem lumi configurado, uso comandos locais. Diga ajuda.");
+      return msg;
+    }
+    setCoreState("thinking");
+    try {
+      const history = (store.get("chat", [])).slice(-10).concat([{ role: "user", content: text }]);
+      const out = await callLLM(history);
+      setCoreState("idle");
+      if (voice) Voice.speak(out.replace(/[*`#_]|https?:\/\/\S+/g, "").slice(0, 600));
+      return out;
+    } catch (e) {
+      setCoreState("idle");
+      const msg = "Falha no LLM: " + e.message + " (verifique a chave/modelo em ⚙)";
+      if (voice) Voice.speak("Falha ao consultar o modelo.");
+      return msg;
+    }
+  }
+  return { respond, cfg, setCfg, PROVIDERS };
+})();
+</script>
+<script>
+/* =====================================================================
+   Widgets em tempo real — editáveis, persistidos, dados reais
+   ===================================================================== */
+const Widgets = (() => {
+  const DEFAULTS = {
+    order: ["clock", "weather", "crypto", "github", "latency", "perf", "tasks", "notes"],
+    hidden: [],
+    settings: { weather: { city: "São Paulo", lat: -23.55, lon: -46.63 }, crypto: { ids: "bitcoin,ethereum,solana" }, github: { repo: "rlkbiloga-coder/acodex" }, notes: { text: "" } },
+  };
+  const defs = {
+    clock: { title: "🕐 Relógio", render(w) {
+      return `<div class="w-val" data-live="clock">--:--:--</div><div class="w-sub" data-live="clockdate">…</div>`;
+    }, tick(w) {
+      const d = new Date();
+      w.querySelector("[data-live=clock]").textContent = d.toLocaleTimeString("pt-BR");
+      w.querySelector("[data-live=clockdate]").textContent = d.toLocaleDateString("pt-BR", { weekday: "long", day: "numeric", month: "long" });
+    }, rate: 1000 },
+    weather: { title: "🌦 Clima (Open-Meteo)", async: true, render(w, s) {
+      return `<div class="w-val" data-live="wt">--</div><div class="w-sub" data-live="wd">buscando ${esc(s.city)}…</div>
+        <div class="w-actions"><input data-set="city" value="${esc(s.city)}" placeholder="cidade"/><button data-act="geo">📍 GPS</button><button data-act="go">↻</button></div>`;
+    }, async fetchIt(w, s) {
+      try {
+        const r = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${s.lat}&longitude=${s.lon}&current=temperature_2m,relative_humidity_2m,weather_code&daily=temperature_2m_max,temperature_2m_min&timezone=auto&forecast_days=1`);
+        if (!r.ok) throw new Error("HTTP " + r.status);
+        const j = await r.json();
+        const codes = { 0: "Céu limpo", 1: "Predom. limpo", 2: "Parcial", 3: "Nublado", 45: "Neblina", 51: "Garoa", 61: "Chuva", 63: "Chuva for.", 80: "Pancadas", 95: "Tempestade" };
+        w.querySelector("[data-live=wt]").innerHTML = j.current.temperature_2m + "°C";
+        w.querySelector("[data-live=wd]").innerHTML = `${codes[j.current.weather_code] || "—"} · umid. ${j.current.relative_humidity_2m}% · máx ${j.daily.temperature_2m_max[0]}° / mín ${j.daily.temperature_2m_min[0]}° <br/>dados: open-meteo.com`;
+      } catch { w.querySelector("[data-live=wt]").textContent = "offline"; w.querySelector("[data-live=wd]").textContent = "sem internet / endpoint — tentarei de novo"; }
+    }, rate: 300000 },
+    crypto: { title: "🪙 Cripto (CoinGecko)", async: true, render(w, s) {
+      return `<div class="w-val" data-live="cbtc">--</div><div class="w-sub" data-live="csub">carregando ${esc(s.ids)}…</div>
+        <div class="w-actions"><input data-set="ids" value="${esc(s.ids)}"/><button data-act="go">↻</button></div>`;
+    }, async fetchIt(w, s) {
+      try {
+        const r = await fetch("https://api.coingecko.com/api/v3/simple/price?ids=" + encodeURIComponent(s.ids) + "&vs_currencies=usd,brl&include_24hr_change=true");
+        if (!r.ok) throw new Error();
+        const j = await r.json();
+        const rows = Object.entries(j).map(([id, v]) => {
+          const ch = v.usd_24h_change ?? 0;
+          return `<div style="display:flex;justify-content:space-between;font-size:11.5px;padding:2px 0"><span style="text-transform:uppercase">${esc(id)}</span><span>$${v.usd?.toLocaleString("pt-BR")} <b style="color:${ch >= 0 ? "var(--mint)" : "var(--rose)"}">${ch >= 0 ? "▲" : "▼"}${Math.abs(ch).toFixed(1)}%</b></span></div>`;
+        }).join("");
+        w.querySelector("[data-live=cbtc]").textContent = "Live";
+        w.querySelector("[data-live=csub]").innerHTML = rows;
+      } catch { w.querySelector("[data-live=cbtc]").textContent = "offline"; w.querySelector("[data-live=csub]").textContent = "sem internet — aguardando"; }
+    }, rate: 120000 },
+    github: { title: "🐙 GitHub (repo real)", async: true, render(w, s) {
+      return `<div class="w-val" data-live="ghs">--</div><div class="w-sub" data-live="ghd">buscando ${esc(s.repo)}…</div>
+        <div class="w-actions"><input data-set="repo" value="${esc(s.repo)}"/><button data-act="go">↻</button></div>`;
+    }, async fetchIt(w, s) {
+      try {
+        const r = await fetch("https://api.github.com/repos/" + s.repo);
+        if (!r.ok) throw new Error();
+        const j = await r.json();
+        w.querySelector("[data-live=ghs]").innerHTML = `★ ${j.stargazers_count} <small style="font-size:12px">stars</small>`;
+        w.querySelector("[data-live=ghd]").innerHTML = `${j.open_issues_count} issues abertas · ${j.forks_count} forks<br/>último push: ${new Date(j.pushed_at).toLocaleDateString("pt-BR")}`;
+      } catch { w.querySelector("[data-live=ghs]").textContent = "offline"; w.querySelector("[data-live=ghd]").textContent = "sem internet ou repo inexistente"; }
+    }, rate: 300000 },
+    latency: { title: "⚡ Latência (real)", render(w) {
+      return `<div class="w-val" data-live="lat">-- ms</div><div class="spark" data-live="latspark">${"<i></i>".repeat(12)}</div>`;
+    }, async: true, async fetchIt(w) {
+      const t0 = performance.now();
+      try { await fetch("https://api.github.com/zen", { cache: "no-store" }); const ms = Math.round(performance.now() - t0);
+        w.querySelector("[data-live=lat]").textContent = ms + " ms";
+        const bars = w.querySelectorAll("[data-live=latspark] i");
+        const vals = (w._hist = (w._hist || [])).concat([ms]).slice(-12);
+        const mx = Math.max(...vals, 50);
+        bars.forEach((b, i) => { b.style.height = (Math.max(2, (vals[i] / mx) * 36)) + "px"; });
+        $("#latLabel").textContent = ms + " ms";
+      } catch { w.querySelector("[data-live=lat]").textContent = "offline"; }
+    }, rate: 30000 },
+    perf: { title: "📊 Sistema (real)", render(w) {
+      return `<div class="w-sub" data-live="perf" style="font-size:11px;line-height:1.8">medindo…</div>`;
+    }, tick(w) {
+      const mem = navigator.deviceMemory ? (navigator.deviceMemory + " GB (aprox. dispositivo)") : null;
+      const heap = performance.memory ? (performance.memory.usedJSHeapSize / 1048576).toFixed(0) + " MB heap JS" : null;
+      const cores = navigator.hardwareConcurrency || null;
+      const fps = FPS.avg ? FPS.avg.toFixed(0) : "…";
+      w.querySelector("[data-live=perf]").innerHTML =
+        `CPU lógicas: <b>${cores ?? "n/d"}</b><br/>Mem. dispositivo: <b>${mem ?? "n/d"}</b><br/>Heap JS: <b>${heap ?? "n/d"}</b><br/>FPS real: <b>${fps}</b><br/>Online: <b>${navigator.onLine ? "sim" : "não"}</b>`;
+    }, rate: 1500 },
+    tasks: { title: "☑ Tarefas", render(w) {
+      return `<div id="wTaskList" style="max-height:130px;overflow:auto"></div>
+        <div class="w-actions"><input data-set="newtask" placeholder="nova tarefa… (Enter)"/><button data-act="add">✚</button></div>`;
+    }, tick(w) { renderTasksMini(w); }, rate: 2000 },
+    notes: { title: "📝 Notas rápidas", render(w, s) {
+      return `<textarea data-set="text" style="width:100%;min-height:86px;background:var(--surface-3);border:1px solid var(--line);border-radius:8px;color:var(--text);padding:8px;font-size:11.5px;font-family:inherit;outline:none" placeholder="salva automaticamente…">${esc(s.text)}</textarea>`;
+    }, events: { "input [data-set=text]"(w, e) { state.settings.notes.text = e.target.value; persist(); } } },
+  };
+  const state = Object.assign({}, structuredClone(DEFAULTS), store.get("widgets", {}));
+  state.settings = Object.assign(structuredClone(DEFAULTS.settings), store.get("widgets", {}).settings || {});
+  function persist() { store.set("widgets", { order: state.order, hidden: state.hidden, settings: state.settings }); }
+
+  const timers = {};
+  function render() {
+    const grid = $("#widgetGrid"); grid.innerHTML = "";
+    for (const id of state.order) {
+      if (state.hidden.includes(id)) continue;
+      const d = defs[id]; if (!d) continue;
+      const el = document.createElement("div");
+      el.className = "widget"; el.draggable = true; el.dataset.wid = id;
+      el.innerHTML = `<div class="w-head">◈ ${d.title}<span class="w-tools"><span class="mini-btn" data-act="hide" title="remover">✕</span></span></div><div class="w-body"></div>`;
+      const body = el.querySelector(".w-body");
+      body.innerHTML = d.render(el, state.settings[id] || {});
+      grid.appendChild(el);
+      wire(el, id, d);
+    }
+  }
+  function wire(el, id, d) {
+    // esconder
+    el.querySelector("[data-act=hide]").onclick = () => { state.hidden.push(id); persist(); render(); toast("Widget removido — restaure com '+ widget'"); };
+    // ações e settings
+    el.querySelectorAll("[data-act]").forEach(btn => {
+      const act = btn.dataset.act;
+      if (act === "hide") return;
+      btn.onclick = async () => {
+        const s = state.settings[id] = state.settings[id] || {};
+        el.querySelectorAll("[data-set]").forEach(inp => s[inp.dataset.set] = inp.value);
+        if (act === "geo" && navigator.geolocation) {
+          navigator.geolocation.getCurrentPosition(p => { s.lat = p.coords.latitude; s.lon = p.coords.longitude; s.city = "GPS"; persist(); render(); toast("Localização atualizada por GPS."); }, () => toast("GPS negado."));
+          return;
+        }
+        persist(); render();
+      };
+    });
+    const enterAdd = el.querySelector("[data-set=newtask]");
+    if (enterAdd) enterAdd.onkeydown = (e) => { if (e.key === "Enter") { addTask(enterAdd.value); enterAdd.value = ""; } };
+    if (d.events) for (const [sel, fn] of Object.entries(d.events)) { const t = el.querySelector(sel.replace(/^[a-z]+ /, "")); if (t) t.addEventListener(sel.startsWith("input") ? "input" : "click", fn.bind(null, el)); }
+    // ciclo de vida
+    clearInterval(timers[id]);
+    const run = async () => {
+      try { if (d.fetchIt) await d.fetchIt(el, state.settings[id] || {}); if (d.tick) d.tick(el); } catch {}
+    };
+    run();
+    if (d.rate) timers[id] = setInterval(run, d.rate);
+    // drag & drop
+    el.addEventListener("dragstart", () => { el.classList.add("dragging"); el._dragging = true; });
+    el.addEventListener("dragend", () => {
+      el.classList.remove("dragging");
+      const order = [...$$("#widgetGrid .widget")].map(x => x.dataset.wid);
+      const visible = order.concat(state.hidden.filter(h => !order.includes(h)));
+      state.order = visible; persist(); render();
+    });
+    el.addEventListener("dragover", (e) => {
+      e.preventDefault();
+      const dragging = $("#widgetGrid .dragging");
+      if (!dragging || dragging === el) return;
+      const rect = el.getBoundingClientRect();
+      const after = (e.clientX - rect.left) / rect.width > .5;
+      el.parentNode.insertBefore(dragging, after ? el.nextSibling : el);
+    });
+  }
+  function addTask(text) {
+    if (!text) return;
+    const list = store.get("tasks", []); list.unshift({ id: Date.now(), text, done: false }); store.set("tasks", list);
+    renderTasksMini(); renderTasks(); toast("Tarefa adicionada.");
+  }
+  function renderTasksMini(w) {
+    const el = (w ? w.querySelector("#wTaskList") : $("#wTaskList")); if (!el) return;
+    const list = store.get("tasks", []);
+    el.innerHTML = list.slice(0, 6).map(t => `<div class="task-item ${t.done ? "done" : ""}"><input type="checkbox" ${t.done ? "checked" : ""} data-tid="${t.id}"/><span>${esc(t.text)}</span></div>`).join("") || `<div class="w-sub">sem tarefas</div>`;
+    el.querySelectorAll("input[data-tid]").forEach(cb => cb.onchange = () => { toggleTask(cb.dataset.tid); });
+  }
+  function toggleTask(id) {
+    const list = store.get("tasks", []).map(t => t.id == id ? { ...t, done: !t.done } : t);
+    store.set("tasks", list); renderTasksMini(); renderTasks();
+  }
+  return { render, addTask, toggleTask, DEFAULTS, get state() { return state; }, persist };
+})();
+
+const FPS = (() => { let last = performance.now(), acc = 0, n = 0; const o = { avg: 0 };
+  function loop(now) { const d = now - last; last = now; acc += d; if (++n >= 20) { o.avg = 1000 / (acc / n); acc = 0; n = 0; } requestAnimationFrame(loop); }
+  requestAnimationFrame(loop); return o; })();
+
+function renderTasks() {
+  const list = store.get("tasks", []);
+  $("#taskOpen").textContent = list.filter(t => !t.done).length;
+  $("#taskDone").textContent = list.filter(t => tt2(t)).length;
+  $("#taskLate").textContent = list.filter(t => t.due && !t.done && new Date(t.due) < new Date()).length;
+  $("#taskList").innerHTML = list.map(t => `<div class="task-item ${t.done ? "done" : ""}">
+      <input type="checkbox" ${t.done ? "checked" : ""} data-tid="${t.id}"/>
+      <span>${esc(t.text)}</span>
+      <span class="del" data-del="${t.id}">✕</span></div>`).join("") || `<div style="padding:20px;text-align:center;color:var(--muted);font-size:12px">Nenhuma tarefa. Uma mente vazia, um quadro limpo.</div>`;
+  $$("#taskList input[data-tid]").forEach(cb => cb.onchange = () => Widgets.toggleTask(cb.dataset.tid));
+  $$("#taskList [data-del]").forEach(b => b.onclick = () => { store.set("tasks", store.get("tasks", []).filter(t => t.id != b.dataset.del)); renderTasks(); Widgets.render(); });
+}
+function tt2(t) { const d = new Date(t.at || 0); const today = new Date(); return t.done && d.toDateString() === today.toDateString(); }
+
+/* gauges do System Monitor — medem o que dá pra medir de verdade */
+function renderGauges() {
+  const mk = (id, label) => `<div class="gauge" data-g="${id}">
+    <svg width="86" height="86" viewBox="0 0 86 86">
+      <circle class="track" cx="43" cy="43" r="36"/>
+      <circle class="fill" cx="43" cy="43" r="36" stroke-dasharray="${2 * Math.PI * 36}" stroke-dashoffset="${2 * Math.PI * 36}"/>
+    </svg><div class="pct" data-gp="${id}">—</div><div class="g-lbl">${label}</div></div>`;
+  $("#gauges").innerHTML = mk("fps", "FPS") + mk("heap", "Heap JS") + mk("heapall", "Mem. alocável");
+}
+function tickGauges() {
+  const C = 2 * Math.PI * 36;
+  const set = (id, pct, txt, color) => {
+    const el = $(`[data-g="${id}"] .fill`); if (!el) return;
+    el.style.strokeDashoffset = C * (1 - Math.min(1, pct));
+    el.style.stroke = color || "var(--accent)";
+    $(`[data-gp="${id}"]`).textContent = txt;
+  };
+  set("fps", Math.min(1, (FPS.avg || 60) / 60), (FPS.avg || 0).toFixed(0), (FPS.avg || 60) < 30 ? "var(--amber)" : "var(--mint)");
+  if (performance.memory) {
+    const u = performance.memory.usedJSHeapSize, l = performance.memory.jsHeapSizeLimit;
+    set("heap", u / (l || 1), (u / 1048576).toFixed(0) + "MB", u / l > .8 ? "var(--rose)" : "var(--accent)");
+    const dm = (navigator.deviceMemory || 4) * 1073741824;
+    set("heapall", u / dm, ((u / dm) * 100).toFixed(1) + "%", "var(--blue)");
+  } else { set("heap", 0, "n/d", "var(--line)"); set("heapall", 0, "n/d", "var(--line)"); }
+}
+
+/* ---------------- FEED — eventos reais (GitHub público + local) ---------------- */
+async function refreshFeed() {
+  const feed = [];
+  // eventos GitHub do repo (público, sem chave)
+  try {
+    const r = await fetch("https://api.github.com/repos/rlkbiloga-coder/acodex/events?per_page=8");
+    if (r.ok) {
+      const evs = await r.json();
+      for (const e of evs) {
+        const icon = { PushEvent: "⎇", PullRequestEvent: "⑃", IssuesEvent: "◌", CreateEvent: "✚", IssueCommentEvent: "💬", WatchEvent: "★" }[e.type] || "◈";
+        let txt = "";
+        if (e.type === "PushEvent") txt = `${e.repo.name}: push com ${e.payload.size} commit(s)`;
+        else if (e.type === "PullRequestEvent") txt = `PR ${e.payload.pull_request.title} — ${e.payload.action}`;
+        else if (e.type === "IssuesEvent") txt = `Issue: ${e.payload.issue.title} — ${e.payload.action}`;
+        else if (e.type === "IssueCommentEvent") txt = `Comentário em #${e.payload.issue.number}: ${e.payload.issue.title}`;
+        else txt = `${e.type} em ${e.repo.name}`;
+        feed.push({ icon, txt, tag: "GITHUB", cls: "b-live", when: new Date(e.created_at).toLocaleString("pt-BR") });
+      }
+    }
+  } catch {}
+  // tarefas atrasadas (local, real)
+  const late = store.get("tasks", []).filter(t => t.due && !t.done && new Date(t.due) < new Date());
+  if (late.length) feed.push({ icon: "⚠", txt: `${late.length} tarefa(s) atrasada(s)`, tag: "WARN", cls: "b-warn", when: "agora" });
+  // próximos eventos (local)
+  const evts = store.get("events", []).filter(e => new Date(e.date) > new Date()).slice(0, 2);
+  evts.forEach(e => feed.push({ icon: "▦", txt: e.title + " — " + new Date(e.date).toLocaleString("pt-BR"), tag: "AGENDA", cls: "b-info", when: "próximo" }));
+  // dica honesta
+  feed.push({ icon: "✦", txt: "Widgets e feed são reais. Sem internet, eles dizem offline — nunca inventam número.", tag: "TIP", cls: "b-tip", when: "sistema" });
+
+  $("#feed").innerHTML = feed.slice(0, 10).map(f => `<div class="feed-item">
+      <span class="fi">${f.icon}</span>
+      <div class="body"><div class="txt">${esc(f.txt)}</div>
+      <div class="meta"><span class="badge ${f.cls}">${f.tag}</span><span>${f.when}</span></div></div>
+    </div>`).join("") || `<div style="padding:20px;color:var(--muted);font-size:12px;text-align:center">Sem rede e sem eventos locais — feed vazio (e honesto).</div>`;
+}
+
+/* Timeline — missões da agenda local com progresso real */
+function renderTimeline() {
+  const evts = store.get("events", []).slice(0, 6);
+  const now = Date.now();
+  $("#timeline").innerHTML = evts.map(e => {
+    const start = new Date(e.date).getTime();
+    const pct = Math.max(0, Math.min(100, ((now - (start - 86400000)) / 86400000) * 100));
+    const late = start < now;
+    return `<div class="tl-item">
+      <div class="t"><b>${esc(e.title)}</b><span>${new Date(e.date).toLocaleString("pt-BR")} ${late ? "· PASSOU" : ""}</span></div>
+      <div class="bar"><i style="width:${pct}%"></i></div></div>`;
+  }).join("") || `<div style="padding:20px;color:var(--muted);font-size:12px;text-align:center">Agenda vazia — agende na aba Calendar.</div>`;
+}
+
+/* ---------------- AGENTS — diretório REAL do ecossistema ---------------- */
+function renderAgents() {
+  const agents = [
+    { n: "Lyra", r: "Backend de serviços · auth dev, infra Base44", s: true, u: "https://app.base44.com/superagent/6a9a1f7e74c182665cfe1b41", ico: "◈" },
+    { n: "Solas", r: "Backend interno · acodexAi, server/, CI/CD", s: true, u: "https://github.com/rlkbiloga-coder/acodex/blob/main/COMMS.md", ico: "◆" },
+    { n: "Superagente", r: "Frontend + manutenção · chamado pela Geiza", s: true, u: "https://github.com/rlkbiloga-coder/acodex/blob/main/COMMS.md", ico: "◉" },
+    { n: "Superagente Líder", r: "Coordenação · aprova permissões do projeto", s: true, u: "https://github.com/rlkbiloga-coder/acodex/blob/main/AGENTS.md", ico: "★" },
+  ];
+  $("#agentsGrid").innerHTML = agents.map(a => `<div class="agent-card">
+      <div class="top"><span class="av">${a.ico}</span><div><div class="nm">${a.n}</div><div class="rl">${a.r}</div></div></div>
+      <div class="st ${a.s ? "on" : "off"}"><span class="dot"></span>${a.s ? "no canal · responde" : "offline"}</div>
+      <a href="${a.u}" target="_blank" rel="noopener">abrir canal ↗</a></div>`).join("");
+  const chans = [
+    { n: "gut — canal entre agentes", d: "Issues do rlkbiloga-coder/gut; Lyra escuta a cada 10 min.", u: "https://github.com/rlkbiloga-coder/gut" },
+    { n: "COMMS.md — mural", d: "Registro de tarefas e mensagens no acodex.", u: "https://github.com/rlkbiloga-coder/acodex/blob/main/COMMS.md" },
+    { n: "AGENTS.md — protocolo", d: "Escopos e IDs dos agentes.", u: "https://github.com/rlkbiloga-coder/acodex/blob/main/AGENTS.md" },
+    { n: "NEXUS super agent", d: "Plataforma IA open source do Nicolas.", u: "https://nicorudorlk22-gif.github.io/nexus-super-agent/" },
+    { n: "Portal Login.html", d: "Portal dev com PKCE.", u: "https://github.com/nicorudorlk22-gif/Login.html" },
+  ];
+  $("#channelsGrid").innerHTML = chans.map(c => `<div class="mk-card"><div class="nm">${c.n}</div><div class="ds">${c.d}</div><a href="${c.u}" target="_blank" rel="noopener">abrir ↗</a></div>`).join("");
+}
+</script>
+<script>
+/* Calendar — eventos locais reais */
+function renderEvents() {
+  const evts = store.get("events", []).sort((a, b) => new Date(a.date) - new Date(b.date));
+  $("#evtList").innerHTML = evts.map(e => {
+    const d = new Date(e.date);
+    const past = d < new Date();
+    return `<div class="mem-row">
+      <span class="cat" style="background:transparent;border:1px solid var(--line);color:${past ? "var(--muted)" : "var(--accent)"}">${past ? "passou" : "agenda"}</span>
+      <span class="txt">${esc(e.title)}</span>
+      <span class="meta">${d.toLocaleString("pt-BR")}</span>
+      <span class="del" data-del="${e.id}">✕</span></div>`;
+  }).join("") || `<div style="padding:20px;text-align:center;color:var(--muted);font-size:12px">Nenhum evento agendado.</div>`;
+  $$("#evtList [data-del]").forEach(b => b.onclick = () => {
+    store.set("events", store.get("events", []).filter(e => e.id != b.dataset.del));
+    renderEvents(); renderTimeline(); refreshFeed();
+  });
+}
+</script>
+<script>
+/* =====================================================================
+   Ferramentas — 26 módulos reais, tudo client-side, sem chave
+   ===================================================================== */
+const TOOLS = {
+  json:      { n: "JSON formatter", i: "{}", f: async (v) => { const j = JSON.parse(v); return JSON.stringify(j, null, 2); } },
+  b64:       { n: "Base64 encode/decode", i: "⇄", f: async (v) => { try { return atob(v.trim()); } catch { return btoa(unescape(encodeURIComponent(v))); } } },
+  sha:       { n: "Hash SHA-1/256/512 (real crypto)", i: "#", f: async (v, mode) => { const alg = mode || "SHA-256"; const buf = await crypto.subtle.digest(alg, new TextEncoder().encode(v)); return alg + ": " + [...new Uint8Array(buf)].map(b => b.toString(16).padStart(2, "0")).join(""); } },
+  uuid:      { n: "UUID v4 (gerador)", i: "◈", f: async (v) => (crypto.randomUUID ? crypto.randomUUID() : "sem suporte") + (v ? "\n" + (crypto.randomUUID ? crypto.randomUUID() : "") : "") },
+  pass:      { n: "Gerador de senhas", i: "🔒", f: async (v) => { const n = Math.min(64, Math.max(8, parseInt(v) || 20)); const ab = "abcdefghijkmnopqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ23456789!@#$%&*"; const arr = new Uint32Array(n); crypto.getRandomValues(arr); return [...arr].map(x => ab[x % ab.length]).join(""); } },
+  qr:        { n: "QR Code (via api.qrserver)", i: "▩", link: (v) => "https://api.qrserver.com/v1/create-qr-code/?size=260x260&data=" + encodeURIComponent(v) },
+  color:     { n: "Conversor HEX ⇄ RGB ⇄ HSL", i: "🎨", f: async (v) => {
+      let m = v.trim().match(/^#?([0-9a-f]{6})$/i);
+      if (m) { const x = parseInt(m[1], 16); const r = x >> 16, g = (x >> 8) & 255, b = x & 255; return `HEX #${m[1]}\nRGB ${r},${g},${b}\nHSL ${rgb2hsl(r, g, b)}`; }
+      m = v.trim().match(/(\d+)\D+(\d+)\D+(\d+)/);
+      if (m) { const [r, g, b] = [+m[1], +m[2], +m[3]].map(x => Math.min(255, x)); return `HEX #${((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1)}\nRGB ${r},${g},${b}\nHSL ${rgb2hsl(r, g, b)}`; }
+      return "ex: #52e7f4 ou 82, 231, 244"; } },
+  regex:     { n: "Regex tester (JS real)", i: "⁂", two: ["regex", "texto"], f: async (r, t) => { try { const re = new RegExp(r, "gm"); const ms = [...t.matchAll(re)]; return ms.length + " correspondência(s):\n" + ms.map(m => `[${m.index}] ${m[0]}`).join("\n") || "(nenhuma)"; } catch (e) { return "regex inválida: " + e.message; } } },
+  http:      { n: "API tester (GET, CORS público)", i: "⇅", f: async (v) => { try { const t0 = performance.now(); const r = await fetch(v, { cache: "no-store" }); const ms = Math.round(performance.now() - t0); const body = (await r.text()).slice(0, 1500); return `HTTP ${r.status} · ${ms}ms\n\n${body}`; } catch (e) { return "Falha (CORS do site ou offline): " + e.message; } } },
+  md:        { n: "Markdown preview", i: "¶", md: true },
+  diff:      { n: "Diff checker", i: "±", two: ["original", "alterado"], f: async (a, b) => { const la = a.split("\n"), lb = b.split("\n"); const out = []; for (let i = 0; i < Math.max(la.length, lb.length); i++) { if (la[i] !== lb[i]) out.push(`- ${la[i] ?? ""}\n+ ${lb[i] ?? ""}`); } return out.join("\n") || "idênticos"; } },
+  epoch:     { n: "Epoch ⇄ data", i: "⏱", f: async (v) => { const n = parseInt(v); if (!isNaN(n)) return new Date(n < 1e12 ? n * 1000 : n).toLocaleString("pt-BR"); const d = new Date(v); return isNaN(d) ? "ex: 1792200000 ou 2026-10-20" : d.getTime().toString(); } },
+  units:     { n: "Conversor de unidades", i: "⇌", f: async (v) => { const U = { km: 1000, m: 1, cm: .01, mi: 1609.34, ft: .3048, kg: 1, g: .001, lb: .453592, oz: .0283495, l: 1, ml: .001, gal: 3.78541 }; const m = v.trim().toLowerCase().match(/([\d.]+)\s*([a-z]+)\s*(?:em|to|para)\s*([a-z]+)/); if (!m || !U[m[2]] || !U[m[4]]) return "ex: 10 km em mi · 70 kg em lb · 2 l em gal"; return `${m[1]} ${m[2]} = ${(parseFloat(m[1]) * U[m[2]] / U[m[4]]).toLocaleString("pt-BR", { maximumFractionDigits: 6 })} ${m[4]}`; } },
+  currency:  { n: "Moedas (CoinGecko, USD→BRL)", i: "$", f: async (v) => { try { const m = v.trim().match(/([\d.]+)\s*(usd|eur)/i); const amt = m ? parseFloat(m[1]) : 1; const cur = m ? m[2].toLowerCase() : "usd"; const r = await fetch(`https://api.coingecko.com/api/v3/simple/price?ids=${cur === "eur" ? "eur" : "usd"}&vs_currencies=brl`); const j = await r.json(); const rate = j[cur === "eur" ? "eur" : "usd"].brl; return `${amt.toLocaleString("pt-BR")} ${cur.toUpperCase()} ≈ R$ ${(amt * rate).toLocaleString("pt-BR", { maximumFractionDigits: 2 })}\n(cotação live: 1 ${cur.toUpperCase()} = R$ ${rate.toFixed(4)})`; } catch { return "offline — sem cotação"; } } },
+  dns:       { n: "DNS lookup (DoH real)", i: "🖧", f: async (v) => { try { const r = await fetch("https://dns.google/resolve?name=" + encodeURIComponent(v.trim()) + "&type=A"); const j = await r.json(); return (j.Answer || []).map(a => `${a.name} → ${a.data}`).join("\n") || "sem registro A"; } catch { return "offline"; } } },
+  ip:        { n: "Meu IP (ipapi.co)", i: "➶", f: async () => { try { const r = await fetch("https://ipapi.co/json/"); const j = await r.json(); return `IP ${j.ip}\n${j.city}, ${j.region}, ${j.country_name}\nISP: ${j.org}`; } catch { return "offline"; } } },
+  jwt:       { n: "JWT decoder (visual)", i: "⚿", f: async (v) => { try { const [h, p] = v.trim().split("."); const dh = JSON.parse(atob(h.replace(/-/g, "+").replace(/_/g, "/"))); const dp = JSON.parse(atob(p.replace(/-/g, "+").replace(/_/g, "/"))); return "HEADER:\n" + JSON.stringify(dh, null, 2) + "\n\nPAYLOAD:\n" + JSON.stringify(dp, null, 2) + "\n\n(não verifico a assinatura — só decodifico)"; } catch { return "JWT inválido"; } } },
+  stats:     { n: "Estatísticas de texto", i: "∑", f: async (v) => { const w = (v.trim().match(/\S+/g) || []).length; const c = v.length; const mins = (w / 200).toFixed(1); return `${w} palavras · ${c} caracteres · ~${mins} min de leitura`; } },
+  case:      { n: "Case converter", i: "Aa", f: async (v) => `camel: ${v.replace(/[-_\s]+(.)?/g, (_, c) => c ? c.toUpperCase() : "")}\nsnake: ${v.trim().toLowerCase().replace(/\s+/g, "_")}\nkebab: ${v.trim().toLowerCase().replace(/\s+/g, "-")}\nUPPER: ${v.toUpperCase()}` },
+  base:      { n: "Conversor de base numérica", i: "₀₂", f: async (v) => { const n = parseInt(v.trim(), 10); if (isNaN(n)) return "digite um inteiro decimal"; return `bin: ${n.toString(2)}\noct: ${n.toString(8)}\nhex: ${n.toString(16).toUpperCase()}`; } },
+  escape:    { n: "Escape/unescape (URL·HTML)", i: "%%", f: async (v) => { try { return decodeURIComponent(v) + "\n\n(encoded de volta:)\n" + encodeURIComponent(decodeURIComponent(v)); } catch { return encodeURIComponent(v); } } },
+  lorem:     { n: "Lorem ipsum pt-BR", i: "§", f: async (v) => { const n = parseInt(v) || 2; const fr = ["O sistema neural opera com máxima eficiência.", "Comandos processados em tempo real garantem resposta fluida.", "Camadas de abstração protegem o núcleo da inteligência.", "Protocolos abertos mantêm a arquitetura transparente."]; return Array.from({ length: n }, () => fr[Math.floor(Math.random() * fr.length)]).join(" "); } },
+  random:    { n: "Sorteio / random", i: "🎲", f: async (v) => { const items = v.split(/[,;\n]/).map(s => s.trim()).filter(Boolean); if (items.length < 2) { const n = parseInt(v) || 100; return "número: " + (Math.floor(crypto.getRandomValues(new Uint32Array(1))[0] / 4294967296 * n) + 1); } return "sorteado: " + items[Math.floor(Math.random() * items.length)]; } },
+  timer:     { n: "Pomodoro (25/5)", i: "◷", timer: true },
+  count:     { n: "Contagem regressiva", i: "⏳", timer: "date" },
+  hashcmp:   { n: "Comparar senhas/valores (hash)", i: "⧖", two: ["valor A", "valor B"], f: async (a, b) => { const h = async (s) => [...new Uint8Array(await crypto.subtle.digest("SHA-256", new TextEncoder().encode(s)))].map(x => x.toString(16).padStart(2, "0")).join(""); const [ha, hb] = [await h(a), await h(b)]; return ha === hb ? "IDÊNTICOS ✓ (SHA-256 igual)" : "DIFERENTES ✗"; } },
+};
+function rgb2hsl(r, g, b) { r /= 255; g /= 255; b /= 255; const mx = Math.max(r, g, b), mn = Math.min(r, g, b); let h = 0, s = 0; const l = (mx + mn) / 2; if (mx !== mn) { const d = mx - mn; s = l > .5 ? d / (2 - mx - mn) : d / (mx + mn); h = mx === r ? ((g - b) / d + (g < b ? 6 : 0)) : mx === g ? (b - r) / d + 2 : (r - g) / d + 4; h /= 6; } return `${(h * 360).toFixed(0)}, ${(s * 100).toFixed(0)}%, ${(l * 100).toFixed(0)}%`; }
+
+function renderTools() {
+  $("#toolsGrid").innerHTML = Object.entries(TOOLS).map(([id, t]) => `<div class="mk-card"><div class="nm">${t.i} ${t.n}</div><div class="ds">módulo real, roda no navegador</div><span class="mk-tag">open · client-side</span><a href="#" data-tool="${id}">abrir ferramenta →</a></div>`).join("");
+  $$("#toolsGrid [data-tool]").forEach(a => a.onclick = (e) => { e.preventDefault(); openTool(a.dataset.tool); });
+}
+function openTool(id) {
+  const t = TOOLS[id]; if (!t) return;
+  let body;
+  if (t.link) {
+    body = `<div class="fld"><label>conteúdo do QR</label><textarea id="toolIn">https://app.base44.com/superagent/6a9a1f7e74c182665cfe1b41</textarea></div><div class="tool-run"><button class="btn" id="toolGo">Gerar QR</button></div><div id="toolOut" style="text-align:center;margin-top:14px"></div>`;
+  } else if (t.timer) {
+    body = t.timer === "date"
+      ? `<div class="fld"><label>Data alvo</label><input id="toolDate" type="datetime-local" /></div><div class="tool-out" id="toolOut">escolha a data</div>`
+      : `<div style="text-align:center;padding:10px"><div style="font-family:var(--mono);font-size:42px;font-weight:700" id="toolOut">25:00</div><div class="tool-run" style="justify-content:center"><button class="btn" id="toolGo">Iniciar</button><button class="btn ghost" id="toolStop">Zerar</button></div></div>`;
+  } else if (t.two) {
+    body = t.two.map((lbl, i) => `<div class="fld"><label>${lbl}</label><textarea id="toolIn${i}"></textarea></div>`).join("") + `<div class="tool-run"><button class="btn" id="toolGo">Executar</button></div><div class="tool-out" id="toolOut"></div>`;
+  } else if (t.md) {
+    body = `<div class="tool-grid-cols"><div><label style="font-size:10px;letter-spacing:.12em;color:var(--muted)">MARKDOWN</label><textarea id="toolIn" style="min-height:200px"># Título\n\n**negrito**, _itálico_, \`código\`, [link](https://exemplo.com)\n- lista\n- itens</textarea></div><div><label style="font-size:10px;letter-spacing:.12em;color:var(--muted)">PREVIEW</label><div id="toolOut" style="min-height:200px;padding:12px;border:1px solid var(--line);border-radius:9px;font-size:13px;line-height:1.6"></div></div></div>`;
+  } else {
+    body = `<div class="fld"><label>entrada</label><textarea id="toolIn"></textarea></div><div class="tool-run"><button class="btn" id="toolGo">Executar</button></div><div class="tool-out" id="toolOut"></div>`;
+  }
+  openModal(t.i + " " + t.n, body);
+  const go = $("#toolGo");
+  if (t.link) go.onclick = () => { $("#toolOut").innerHTML = `<img alt="QR" style="max-width:240px;border-radius:9px" src="${t.link($("#toolIn").value)}"/>`; };
+  else if (t.timer === true) { let left = 25 * 60, run = null; const draw = () => { const m = Math.floor(left / 60), s = left % 60; $("#toolOut").textContent = `${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`; };
+    draw(); go.onclick = () => { clearInterval(run); run = setInterval(() => { left = left > 0 ? left - 1 : (left === 0 ? -1 : 0); if (left === 0) { toast("Pomodoro completo — 5 min de pausa."); left = -1; } draw(); }, 1000); };
+    $("#toolStop").onclick = () => { clearInterval(run); left = 25 * 60; draw(); }; }
+  else if (t.timer === "date") { $("#toolDate").oninput = () => { const d = new Date($("#toolDate").value); if (isNaN(d)) return; const s = Math.floor((d - Date.now()) / 1000); $("#toolOut").textContent = s > 0 ? `${Math.floor(s / 86400)}d ${Math.floor((s % 86400) / 3600)}h ${Math.floor((s % 3600) / 60)}m ${s % 60}s` : "data no passado"; }; }
+  else if (t.md) { const render = () => { const v = $("#toolIn").value; $("#toolOut").innerHTML = v.replace(/^### (.*)$/gm, "<h3>$1</h3>").replace(/^## (.*)$/gm, "<h2>$1</h2>").replace(/^# (.*)$/gm, "<h1>$1</h1>").replace(/\*\*(.+?)\*\*/g, "<b>$1</b>").replace(/_(.+?)_/g, "<i>$1</i>").replace(/`([^`]+)`/g, "<code>$1</code>").replace(/\[(.+?)\]\((https?:\/\/[^\s)]+)\)/g, '<a href="$2" target="_blank" rel="noopener" style="color:var(--accent)">$1</a>').replace(/^- (.*)$/gm, "• $1").replace(/\n/g, "<br/>"); }; $("#toolIn").oninput = render; render(); }
+  else if (go) go.onclick = async () => { const out = $("#toolOut"); out.textContent = "…"; try { const args = t.two ? [$("#toolIn0").value, $("#toolIn1").value] : [$("#toolIn").value]; out.textContent = await t.f(...args); } catch (e) { out.textContent = "erro: " + e.message; } };
+}
+
+/* ---------------- MARKETPLACE — ecossistema open source (links reais) ---------------- */
+const MARKET = [
+  ["AutoGPT", "Agente autônomo com objetivos — o clássico.", "https://github.com/Significant-Gravitas/AutoGPT"],
+  ["SuperAGI", "Framework de agentes autônomos com GUI.", "https://github.com/TransformerOptimus/SuperAGI"],
+  ["AgentGPT", "Agentes no navegador, fácil de testar.", "https://github.com/reworkd/AgentGPT"],
+  ["MetaGPT", "Multi-agente simulando um time de software.", "https://github.com/FoundationAgents/MetaGPT"],
+  ["OpenHands", "Dev-agent open source que escreve código (ex-OpenDevin).", "https://github.com/All-Hands-AI/OpenHands"],
+  ["Devika", "Agente engenheiro de software AI.", "https://github.com/AGENTIC-WORKSPACE/devika"],
+  ["CrewAI", "Orquestra times de agentes com papéis.", "https://github.com/crewAIInc/crewAI"],
+  ["AutoGen (Microsoft)", "Multi-agent conversation framework.", "https://github.com/microsoft/autogen"],
+  ["LangChain", "O framework de LLM apps mais usado.", "https://github.com/langchain-ai/langchain"],
+  ["Langflow", "Construtor visual de fluxos LLM.", "https://github.com/langflow-ai/langflow"],
+  ["Flowise", "Flowise — LLM apps visuais, low-code.", "https://github.com/FlowiseAI/Flowise"],
+  ["Dify", "Plataforma LLM open-source com RAG e agentes.", "https://github.com/langgenius/dify"],
+  ["CAMEL", "Multi-agent role-playing framework.", "https://github.com/camel-ai/camel"],
+  ["Huginn", "Automação estilo IFTTT self-hosted, veterano.", "https://github.com/huginn/huginn"],
+  ["n8n", "Automação de workflows self-hosted (nodes de IA).", "https://github.com/n8n-io/n8n"],
+  ["Activepieces", "Automação open-source moderna.", "https://github.com/activepieces/activepieces"],
+  ["Node-RED", "Automação por fluxo visual, IoT-friendly.", "https://github.com/node-red/node-red"],
+  ["Windmill", "Scripts → workflows → apps, self-hosted.", "https://github.com/windmill-labs/windmill"],
+  ["Budibase", "Apps internos low-code self-hosted.", "https://github.com/Budibase/budibase"],
+  ["ToolJet", "Construtor de dashboards/app low-code.", "https://github.com/ToolJet/ToolJet"],
+  ["Appsmith", "Plataforma low-code para painéis internos.", "https://github.com/appsmithorg/appsmith"],
+  ["Ollama", "Rode LLMs locais com um comando — privacidade total.", "https://github.com/ollama/ollama"],
+  ["LocalAI", "Alternativa open-source self-hosted de APIs de IA.", "https://github.com/mudler/LocalAI"],
+  ["llama.cpp", "Motor LLM local de alta performance.", "https://github.com/ggml-org/llama.cpp"],
+  ["Whisper.cpp", "Reconhecimento de fala local (o motor deste tipo de voz).", "https://github.com/ggml-org/whisper.cpp"],
+  ["Piper", "TTS neural local — voz offline rápida.", "https://github.com/rhasspy/piper"],
+  ["MemGPT", "Memória persistente para agentes LLM.", "https://github.com/letta-ai/letta"],
+  ["Open WebUI", "Interface completa para LLMs locais.", "https://github.com/open-webui/open-webui"],
+];
+function renderMarket() {
+  $("#marketGrid").innerHTML = MARKET.map(([n, d, u]) => `<div class="mk-card"><div class="nm">${n}</div><div class="ds">${d}</div><span class="mk-tag">open source</span><a href="${u}" target="_blank" rel="noopener">abrir no GitHub ↗</a></div>`).join("");
+}
+
+/* ---------------- TERMINAL — Pyodide real + JS real + shell ---------------- */
+const Term = (() => {
+  let mode = "py", py = null, pyLoading = false;
+  const out = () => $("#termOut");
+  function print(txt, cls) { const d = out(); d.innerHTML += `<span class="${cls || ""}">${esc(txt)}\n</span>`; d.scrollTop = d.scrollHeight; }
+  async function ensurePy() {
+    if (py) return py;
+    if (pyLoading) { print("aguardando engine…", "t-dim"); return null; }
+    pyLoading = true;
+    print("carregando Pyodide (CDN, ~6MB — primeira vez só)…", "t-dim");
+    try {
+      await new Promise((res, rej) => { const s = document.createElement("script"); s.src = "https://cdn.jsdelivr.net/pyodide/v0.26.2/full/pyodide.js"; s.onload = res; s.onerror = rej; document.head.appendChild(s); });
+      py = await loadPyodide({ stdout: (t) => print(t, "t-ok"), stderr: (t) => print(t, "t-err") });
+      $("#termStatus").innerHTML = '<span class="live"><span class="dot"></span> Python real pronto</span>';
+      print("Python pronto — execução 100% real no seu navegador (WASM sandbox).", "t-ok");
+    } catch { print("falha ao carregar Pyodide — verifique a internet.", "t-err"); $("#termStatus").textContent = "offline"; }
+    pyLoading = false;
+    return py;
+  }
+  async function run(line) {
+    if (!line.trim()) return;
+    print(`${mode} › ${line}`, "t-in");
+    if (mode === "sys") { return shell(line); }
+    if (line.trim() === "/help") return help();
+    try {
+      if (mode === "py") {
+        const p = await ensurePy(); if (!p) return;
+        await p.runPythonAsync(line);
+      } else {
+        const r = (0, eval)(line);
+        print(String(r), "t-ok");
+      }
+    } catch (e) { print(String(e), "t-err"); }
+  }
+  async function shell(line) {
+    const [c, ...rest] = line.trim().split(/\s+/); const arg = rest.join(" ");
+    switch (c) {
+      case "/help": case "help": return help();
+      case "date": return print(new Date().toString(), "t-ok");
+      case "mem": return print(Memory.all().length + " memórias locais", "t-ok");
+      case "recall": return print(Memory.recall(arg)?.m.text || "nada relevante", "t-ok");
+      case "remember": return print(Memory.add(arg, "lembrete").text + " — memorizado", "t-ok");
+      case "theme": return setTheme(THEMES.includes(arg) ? arg : "nebula", true);
+      case "tools": return print(Object.entries(TOOLS).map(([k, t]) => `${k.padEnd(10)} ${t.n}`).join("\n"));
+      case "open": { const nav = { tools: "tools", terminal: "terminal", browser: "browser", memory: "memory", chat: "chat", market: "marketplace" }[arg]; if (nav) $$(".nav-item").find(n => n.dataset.view === nav)?.click(); return print("ok", "t-ok"); }
+      case "net": { const t0 = performance.now(); try { await fetch("https://api.github.com/zen"); print("online · " + Math.round(performance.now() - t0) + "ms", "t-ok"); } catch { print("offline", "t-err"); } return; }
+      case "clear": return out().innerHTML = "";
+      default: print("comando desconhecido: " + c + " — /help", "t-err");
+    }
+  }
+  function help() {
+    print("PY: execute Python real (print, list comprehensions, math…) — engine Pyodide WASM\nJS: qualquer expressão JavaScript — eval real\nSHELL: date, mem, recall <q>, remember <txt>, theme <nome>, tools, open <view>, net, clear", "t-dim");
+  }
+  return { run, setMode(m) { mode = m; $("#termPs").textContent = m === "py" ? "py ›" : m === "js" ? "js ›" : "jarvis ›"; } };
+})();
+
+/* ---------------- MODAL / PALETTE / CHAT / SETTINGS ---------------- */
+function openModal(title, bodyHTML) { $("#modalTitle").textContent = title; $("#modalBody").innerHTML = bodyHTML; $("#modalScrim").classList.add("open"); }
+function closeModal() { $("#modalScrim").classList.remove("open"); }
+
+function openSettings() {
+  const c = Brain.cfg();
+  const opts = Object.entries(Brain.PROVIDERS).map(([k, p]) => `<option value="${k}" ${c.provider === k ? "selected" : ""}>${p.label}</option>`).join("");
+  const models = c.provider && Brain.PROVIDERS[c.provider] ? Brain.PROVIDERS[c.provider].models.map(m => `<option ${c.model === m ? "selected" : ""}>${m}</option>`).join("") : "";
+  openModal("⚙ Configurações", `
+    <div class="fld"><label>Chave da LLM (fica só no seu navegador — localStorage)</label>
+      <input id="cfgKey" type="password" value="${esc(c.key)}" placeholder="cole a chave aqui…"/></div>
+    <div class="fld"><label>Provedor</label><select id="cfgProv"><option value="none">— sem LLM (modo local) —</option>${opts}</select></div>
+    <div class="fld"><label>Modelo</label><select id="cfgModel">${models}</select></div>
+    <div class="w-sub" style="margin:8px 0 14px">Dica: OpenRouter tem modelos <b>:free</b> — crie a conta em openrouter.ai, gere a chave e escolha um modelo marcado free. Gemini e Groq também têm free tier.</div>
+    <button class="btn" id="cfgSave">Salvar</button>`);
+  $("#cfgProv").onchange = () => {
+    const p = Brain.PROVIDERS[$("#cfgProv").value];
+    $("#cfgModel").innerHTML = p ? p.models.map(m => `<option>${m}</option>`).join("") : "";
+  };
+  $("#cfgSave").onclick = () => {
+    Brain.setCfg({ provider: $("#cfgProv").value, key: $("#cfgKey").value.trim(), model: $("#cfgModel").value });
+    closeModal(); renderLLMStatus(); updateLLMBadge();
+    toast("LLM configurada — o JARVIS agora responde com o modelo escolhido.");
+  };
+}
+function updateLLMBadge() {
+  const c = Brain.cfg();
+  const on = c.provider && c.provider !== "none" && c.key;
+  $("#llmBadge").innerHTML = `<span class="dot"></span> <b>${on ? c.model : "modo local"}</b>`;
+  $("#modelLabel").textContent = on ? c.model.split("/").pop() : "local";
+}
+function renderLLMStatus() {
+  const c = Brain.cfg();
+  const provs = [["openrouter", "OpenRouter", "openrouter.ai/keys"], ["gemini", "Google Gemini", "aistudio.google.com"], ["groq", "Groq", "console.groq.com/keys"], ["nvidia", "NVIDIA NIM", "build.nvidia.com"], ["ollama", "Ollama (local)", "ollama.com — roda no seu PC"]];
+  $("#llmGrid").innerHTML = provs.map(([k, n, d]) => {
+    const on = c.provider === k && c.key;
+    return `<div class="agent-card"><div class="top"><span class="av">⧉</span><div><div class="nm">${n}</div><div class="rl">${d}</div></div></div>
+      <div class="st ${on ? "on" : "off"}"><span class="dot"></span>${on ? "conectado" : "não configurado"}</div></div>`;
+  }).join("");
+  $("#stLLMs").innerHTML = (c.key ? 1 : 0) + " <small>config.</small>";
+}
+
+/* chat */
+function pushMsg(who, text) {
+  const log = $("#chatLog");
+  const d = document.createElement("div");
+  d.className = "msg " + who;
+  d.innerHTML = `<div class="who">${who === "user" ? "Você" : "JARVIS"}</div>${esc(text)}`;
+  log.appendChild(d); log.scrollTop = log.scrollHeight;
+  const hist = store.get("chat", []); hist.push({ role: who === "user" ? "user" : "assistant", content: text }); store.set("chat", hist.slice(-40));
+}
+async function chatSend(text) {
+  if (!text.trim()) return;
+  pushMsg("user", text); $("#chatInput").value = "";
+  const out = await Brain.respond(text, false);
+  pushMsg("jarvis", out);
+}
+
+/* palette (Ctrl+K) */
+function buildPalette() {
+  const items = [];
+  Object.entries(TOOLS).forEach(([k, t]) => items.push({ n: "Ferramenta: " + t.n, run: () => { go("tools"); openTool(k); } }));
+  THEMES.forEach(t => items.push({ n: "Tema: " + t, run: () => setTheme(t, true) }));
+  ["home", "agents", "widgets", "chat", "memory", "terminal", "browser", "tools", "marketplace", "tasks", "calendar"].forEach(v => items.push({ n: "Ir para: " + v, run: () => go(v) }));
+  items.push({ n: "Briefing executivo", run: () => briefing() });
+  items.push({ n: "Configurar LLM", run: () => openSettings() });
+  return items;
+}
+let palSel = 0;
+function showPalette(q) {
+  const items = buildPalette().filter(i => i.n.toLowerCase().includes(q.toLowerCase())).slice(0, 12);
+  palSel = Math.min(palSel, Math.max(0, items.length - 1));
+  $("#palList").innerHTML = items.map((it, i) => `<div class="pal-item ${i === palSel ? "sel" : ""}" data-i="${i}">${it.n}<span class="k">↵</span></div>`).join("") || `<div class="pal-item" style="color:var(--muted)">nada encontrado</div>`;
+  $$("#palList [data-i]").forEach(el => el.onclick = () => { $("#palScrim").classList.remove("open"); items[+el.dataset.i].run(); });
+  return items;
+}
+
+/* briefing executivo — dados reais do momento */
+async function briefing() {
+  const late = store.get("tasks", []).filter(t => t.due && !t.done && new Date(t.due) < new Date()).length;
+  const open = store.get("tasks", []).filter(t => !t.done).length;
+  const mem = Memory.all().length;
+  let net = "offline";
+  try { await fetch("https://api.github.com/zen"); net = "online"; } catch {}
+  const report = `BRIEFING EXECUTIVO — ${new Date().toLocaleString("pt-BR")}
+Status: sistema ${net}, ${FPS.avg.toFixed(0)} FPS, ${mem} memórias armazenadas.
+Tarefas: ${open} abertas${late ? ` · ${late} atrasada(s)` : ""}.
+LLM: ${Brain.cfg().provider !== "none" && Brain.cfg().key ? Brain.cfg().model + " conectado" : "modo local (configure em ⚙)"}.
+Feed GitHub e widgets atualizam sozinhos. Fale comigo pelo botão TALK TO JARVIS.`;
+  openModal("✦ Executive Briefing", `<div class="tool-out" style="min-height:120px">${esc(report)}</div>`);
+  Voice.speak(`Sistema ${net}. ${open} tarefas abertas. Modo ${Brain.cfg().key ? "com modelo conectado" : "local"}. Bom trabalho, comandante.`);
+}
+
+/* navegação */
+function go(view) {
+  $$(".nav-item").forEach(n => n.classList.toggle("active", n.dataset.view === view));
+  $$(".view").forEach(v => v.classList.toggle("active", v.id === "view-" + view));
+}
+
+/* ---------------- INIT ---------------- */
+(function init() {
+  setTheme(store.get("theme", "nebula"));
+  Orb.init($("#orbCanvas"));
+  window._wave1 = makeWave($("#sidebarWave"), 9);
+  window._wave2 = makeWave($("#footWave"), 5);
+  window._wave3 = makeWave($("#footWave2"), 5);
+
+  $$(".nav-item").forEach(n => n.onclick = () => go(n.dataset.view));
+  $$("[data-open]").forEach(b => b.onclick = () => { const v = b.dataset.open; if (v === "home") go("home"); else go(v === "home" ? "home" : v); });
+  $("#menuButton").onclick = () => $("#app").classList.toggle("nav-hidden");
+  $("#themeButton").onclick = cycleTheme;
+  $("#settingsButton").onclick = openSettings;
+  $("#modalClose").onclick = closeModal;
+  $("#modalScrim").onclick = (e) => { if (e.target.id === "modalScrim") closeModal(); };
+  $("#focusButton").onclick = () => {
+    const on = $("#focusButton").classList.toggle("on");
+    $$(".view:not(#view-home)").forEach(v => v.style.display = on ? "none" : "");
+    toast(on ? "Focus Mode: só o essencial." : "Focus Mode desligado.");
+  };
+  $("#talkButton").onclick = async () => { await Voice.startMic(); Voice.toggle(async (txt) => { pushMsg("user", txt); setCoreState("thinking"); const out = await Brain.respond(txt, true); pushMsg("jarvis", out); go("chat"); }); };
+  $("#briefingButton").onclick = briefing;
+  $("#qcVoice").onclick = () => $("#talkButton").click();
+  $("#qcTask").onclick = () => { go("tasks"); $("#taskInput").focus(); };
+  $("#chatSend").onclick = () => chatSend($("#chatInput").value);
+  $("#chatInput").onkeydown = (e) => { if (e.key === "Enter") chatSend($("#chatInput").value); };
+  $("#operatorButton").onclick = () => toast("Operador: Nicolas Martins · sessão local");
+
+  /* paleta */
+  $("#globalSearch").onkeydown = (e) => { if (e.key === "Enter") { showPalette(e.target.value); $("#palInput").value = e.target.value; $("#palScrim").classList.add("open"); $("#palInput").focus(); } };
+  $("#globalSearch").onclick = () => { $("#palScrim").classList.add("open"); $("#palInput").value = ""; $("#palInput").focus(); showPalette(""); };
+  $("#palScrim").onclick = (e) => { if (e.target.id === "palScrim") $("#palScrim").classList.remove("open"); };
+  $("#palInput").oninput = (e) => { palSel = 0; showPalette(e.target.value); };
+  $("#palInput").onkeydown = (e) => {
+    const items = showPalette($("#palInput").value);
+    if (e.key === "ArrowDown") { palSel = Math.min(palSel + 1, items.length - 1); showPalette($("#palInput").value); }
+    else if (e.key === "ArrowUp") { palSel = Math.max(palSel - 1, 0); showPalette($("#palInput").value); }
+    else if (e.key === "Enter" && items[palSel]) { $("#palScrim").classList.remove("open"); items[palSel].run(); }
+    else if (e.key === "Escape") $("#palScrim").classList.remove("open");
+  };
+  addEventListener("keydown", (e) => { if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "k") { e.preventDefault(); $("#palScrim").classList.add("open"); $("#palInput").focus(); } });
+
+  /* memória */
+  $("#memAdd").onclick = () => { const v = $("#memInput").value.trim(); if (v) { Memory.add(v); $("#memInput").value = ""; toast("Memorizado."); } };
+  $("#memInput").onkeydown = (e) => { if (e.key === "Enter") $("#memAdd").click(); };
+  $("#memExport").onclick = () => { const blob = new Blob([JSON.stringify(Memory.all(), null, 2)], { type: "application/json" }); const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = "jarvis-memories.json"; a.click(); };
+  $("#memImport").onclick = () => { const inp = document.createElement("input"); inp.type = "file"; inp.accept = ".json"; inp.onchange = async () => { try { const j = JSON.parse(await inp.files[0].text()); store.set("memories", j); Memory.render(); toast("Memórias importadas."); } catch { toast("Arquivo inválido."); } }; inp.click(); };
+
+  /* tarefas */
+  $("#taskAdd").onclick = () => { const v = $("#taskInput").value.trim(); if (v) { Widgets.addTask(v); $("#taskInput").value = ""; } };
+  $("#taskInput").onkeydown = (e) => { if (e.key === "Enter") $("#taskAdd").click(); };
+
+  /* agenda */
+  $("#evtAdd").onclick = () => { const t = $("#evtTitle").value.trim(), d = $("#evtDate").value; if (!t || !d) return toast("Preencha título e data."); const l = store.get("events", []); l.push({ id: Date.now(), title: t, date: new Date(d).toISOString() }); store.set("events", l); $("#evtTitle").value = ""; renderTimeline(); renderEvents(); refreshFeed(); toast("Evento agendado."); };
+  $("#evtRefresh").onclick = () => { renderEvents(); renderTimeline(); };
+
+  /* widgets */
+  Widgets.render();
+  $("#wAdd").onclick = () => {
+    const avail = Object.keys(Widgets.DEFAULTS.order).length ? Widgets.DEFAULTS.order : [];
+    const missing = Widgets.DEFAULTS.order.filter(id => Widgets.state.order.includes(id) === false || Widgets.state.hidden.includes(id));
+    if (!missing.length) return toast("Todos os widgets já estão visíveis.");
+    openModal("+ Widget", `<div class="mk-grid">${missing.map(id => `<div class="mk-card"><div class="nm">${id}</div><a href="#" data-w="${id}">restaurar →</a></div>`).join("")}</div>`);
+    $$("#modalBody [data-w]").forEach(a => a.onclick = (e) => { e.preventDefault(); const id = a.dataset.w;
+      Widgets.state.hidden = Widgets.state.hidden.filter(h => h !== id);
+      if (!Widgets.state.order.includes(id)) Widgets.state.order.push(id);
+      Widgets.persist(); Widgets.render(); closeModal(); toast("Widget restaurado."); });
+  };
+  $("#wReset").onclick = () => { store.set("widgets", {}); location.reload(); };
+
+  /* terminal */
+  $$(".term-tab").forEach(t => t.onclick = () => { $$(".term-tab").forEach(x => x.classList.remove("on")); t.classList.add("on"); Term.setMode(t.dataset.term); $("#termInput").focus(); });
+  $("#termInput").onkeydown = (e) => { if (e.key === "Enter") { const v = e.target.value; e.target.value = ""; Term.run(v); } };
+
+  /* browser */
+  $("#browserGo").onclick = () => { const u = $("#browserUrl").value.trim(); if (u) $("#browserFrame").src = u; };
+  $("#browserUrl").onkeydown = (e) => { if (e.key === "Enter") $("#browserGo").click(); };
+  const LINKS = [["Mapa SP", "https://www.openstreetmap.org/export/embed.html?bbox=-46.75,-23.68,-46.52,-23.48&layer=mapnik"], ["Wikipedia", "https://pt.m.wikipedia.org/wiki/"], ["MDN docs", "https://developer.mozilla.org/pt-BR/"], ["Python docs", "https://docs.python.org/pt-br/3/"]];
+  $("#browserLinks").innerHTML = LINKS.map(([n, u]) => `<span class="qlink" data-u="${u}">${n}</span>`).join("");
+  $$("#browserLinks .qlink").forEach(q => q.onclick = () => { $("#browserUrl").value = q.dataset.u; $("#browserFrame").src = q.dataset.u; });
+
+  /* render estáticos */
+  renderGauges(); renderAgents(); renderTools(); renderMarket(); renderLLMStatus(); renderTasks(); renderTimeline(); renderEvents(); Memory.render(); updateLLMBadge();
+
+  /* relógio e sessão */
+  setInterval(() => { const d = new Date(); $("#clockLabel").textContent = d.toLocaleTimeString("pt-BR"); $("#dateLabel").textContent = d.toLocaleDateString("pt-BR", { day: "2-digit", month: "short" }); }, 1000);
+  const t0 = Date.now();
+  setInterval(() => { const s = Math.floor((Date.now() - t0) / 1000); $("#sessionLabel").textContent = [Math.floor(s / 3600), Math.floor(s / 60) % 60, s % 60].map(x => String(x).padStart(2, "0")).join(":"); }, 1000);
+  setInterval(tickGauges, 1200); tickGauges();
+
+  /* rede / local */
+  const updNet = () => { $("#netLabel").textContent = navigator.onLine ? "online" : "offline"; $("#stSystem").textContent = navigator.onLine ? "Optimal" : "Offline"; $("#coreBadge").textContent = navigator.onLine ? "● Core Online" : "○ Offline"; };
+  addEventListener("online", updNet); addEventListener("offline", updNet); updNet();
+  if (navigator.geolocation) navigator.geolocation.getCurrentPosition(
+    p => { $("#locLabel").textContent = `${p.coords.latitude.toFixed(2)}, ${p.coords.longitude.toFixed(2)}`; },
+    () => { $("#locLabel").textContent = "GPS off"; }, { timeout: 8000 });
+  else $("#locLabel").textContent = "GPS n/d";
+
+  refreshFeed(); setInterval(refreshFeed, 120000);
+  setInterval(renderTimeline, 60000);
+
+  /* boas-vindas honestas */
+  pushMsg("jarvis", "JARVIS online. Modo local ativo: comandos de voz, terminal Python real, widgets e ferramentas funcionam sem chave nenhuma. Para conversação livre, configure uma LLM em ⚙ (OpenRouter tem modelos free). Diga ou digite 'ajuda'.");
+  autoThemeByTime();
+  if (window.speechSynthesis) speechSynthesis.getVoices();
+})();
+</script>
+</body>
+</html>
